@@ -1,0 +1,98 @@
+# Configuración de pos-peripherals-agent (Agente Local POS en Rust)
+
+[server]
+# MODO A (ESTÁNDAR DE INSTALACIÓN): host = "127.0.0.1" y api_key = "".
+#   El agente solo es accesible desde esta misma caja; no se abren puertos en el Firewall.
+#   El ERP web en esta caja llama a http://127.0.0.1:8989 y su dominio exacto va en cors_origins.
+# MODO B (AVANZADO, solo red cableada y confiable): host = "0.0.0.0" (o IP de LAN) + api_key obligatoria
+#   + regla de Firewall restringida a la subred. La clave la envía un servidor/cliente nativo, nunca el navegador.
+host = "127.0.0.1"
+
+# Puerto HTTP principal unificado (por defecto 8989, centraliza Báscula, Gaveta, Tickets, Etiquetas, Matriz y Dashboard)
+port = 8989
+
+# Puertos secundarios opcionales (0 = deshabilitados para operar exclusivamente en el puerto unificado 8989)
+legacy_print_port = 0
+legacy_label_port = 0
+
+# Orígenes exactos del POS web autorizados para llamadas desde el navegador.
+# Lista vacía bloquea solicitudes con Origin; no usar "*".
+cors_origins = []
+
+# Para un bind distinto de loopback, configurar una clave aleatoria y enviarla como
+# Authorization: Bearer <key> o x-api-key. En loopback, clientes de navegador deben
+# tener su origen exacto en cors_origins; clientes nativos locales pueden usar loopback.
+# No incluir una clave real en el frontend web ni versionarla en el repositorio.
+api_key = ""
+
+[scale]
+# Puerto serial donde está conectada la báscula física:
+# "auto" (Recomendado): Escanea y reconoce automáticamente el puerto COM/USB activo.
+# O especificar puerto fijo:
+# Windows: "COM1", "COM3", "COM4", etc.
+# Linux: "/dev/ttyUSB0", "/dev/ttyACM0"
+# macOS: "/dev/cu.usbserial-110", etc.
+port = "auto"
+
+# Velocidad de comunicación en baudios (comúnmente 9600 o 4800)
+baud_rate = 9600
+
+# Tiempo límite de espera de lectura en milisegundos
+timeout_ms = 1000
+
+# Modo de simulación global:
+# false (RECOMENDADO EN PRODUCCIÓN): Si la báscula física no está conectada, retorna error HTTP 503
+# y NUNCA genera pesos fantasmas o aleatorios, protegiendo las ventas del negocio.
+# true (SOLO DESARROLLO): Permite emulación si no hay báscula física y acepta flags de simulación.
+# Con false, las peticiones ?simulate, ?mock, ?test, ?weight, ?unit o ?stable se rechazan con HTTP 403.
+simulation_mode = false
+
+[printer]
+# Nombre exacto de la impresora térmica de tickets en el Sistema Operativo
+# Ejemplos en Windows: "POS-80", "Xprinter XP-58", "Generic / Text Only"
+default_printer = "POS-80"
+
+# Nombre exacto de la impresora térmica de etiquetas TSPL/ZPL en el Sistema Operativo
+# Ejemplos: "3nStar 4B-2054L", "4BARCODE 4B-2054L", "Xprinter XP-365B", "Zebra GK420t"
+default_label_printer = "3nStar 4B-2054L"
+
+# Nombre exacto de la impresora de matriz de punto (forma continua) en el Sistema Operativo
+# Ejemplos: "EPSON LX-350 ESC/P", "EPSON LX-300+", "FX-890", "OKI ML320", "Generic / Text Only"
+default_matrix_printer = "Generic / Text Only"
+
+# Nombre exacto o "auto" de la impresora láser / multifuncional para documentos (A4 / Carta)
+# Ejemplos: "HP LaserJet Pro MFP M428fdw", "EPSON EcoTank L3250", "Canon PIXMA G3110", "Brother HL-L2360D", "auto"
+default_document_printer = "auto"
+
+# Palabras clave adicionales para auto-detección heurística de ticketeras (opcional)
+# extra_pos_keywords = ["CAJA1", "FACTURACION", "RECEPCION"]
+
+# Palabras clave adicionales para auto-detección heurística de etiquetadoras (opcional)
+# extra_label_keywords = ["CARNICERIA", "CHARCUTERIA", "PESAJE"]
+
+# Palabras clave adicionales para auto-detección heurística de impresoras de matriz/forma continua (opcional)
+# extra_matrix_keywords = ["LX-350", "LX-300", "FX-890", "LQ-590", "ML320", "FORMA CONTINUA"]
+
+# Palabras clave adicionales para auto-detección heurística de impresoras láser/documentos (opcional)
+# extra_document_keywords = ["OFICINA", "GERENCIA", "ADMINISTRACION", "REPORTE", "COLOR"]
+
+# Ruta del ejecutable SumatraPDF en Windows para impresión silenciosa de PDFs
+# Si se omite o se usa "tools\\SumatraPDF.exe", el agente lo ubica automáticamente
+sumatra_path = "tools\\SumatraPDF.exe"
+
+# Argumentos para SumatraPDF (modo silencioso, ajuste noscale)
+sumatra_args = "-print-to {printer} -print-settings noscale -silent {file}"
+
+# Tamaño máximo permitido para descargas remotas de PDFs en megabytes (protección contra OOM)
+max_download_size_mb = 10
+
+# Política de descargas en red privada (RFC 1918):
+# false (RECOMENDADO): Bloquea descargas hacia IPs privadas para prevenir ataques SSRF.
+# true: Permite descargas desde servidores ERP locales de tienda (192.168.x.x, 10.x.x.x).
+# NOTA: 127.0.0.1 (loopback) y 169.254.169.254 (metadata cloud) se bloquean SIEMPRE incondicionalmente.
+allow_private_network_downloads = false
+# Tiempo límite de espera para impresión y procesos externos en segundos
+print_timeout_sec = 30
+
+
+

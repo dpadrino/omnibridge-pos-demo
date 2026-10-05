@@ -1,0 +1,970 @@
+openapi: 3.0.3
+info:
+  title: OmniBridge POS — Peripherals Hardware Gateway API
+  description: |
+    API local escrita en Rust con rutas HTTP para los flujos seriales y de impresión implementados.
+    El tamaño del binario, consumo de memoria, latencia y compatibilidad física por modelo no están
+    certificados por esta especificación. Las lecturas físicas usan el baud rate configurado y un
+    parser numérico genérico; la estabilidad física no se afirma sin un indicador de protocolo validado.
+    Las solicitudes de navegador requieren un origen exacto configurado en `cors_origins`; la lista
+    vacía y el comodín no autorizan orígenes. Al escuchar fuera de loopback, las rutas protegidas
+    requieren `Authorization: Bearer <api_key>` o `x-api-key`. La apertura de gaveta es POST-only.
+    Las descargas requieren una URL directa de PDF: no se siguen redirecciones y las direcciones
+    resueltas se validan y fijan para la conexión.
+  version: 1.1.0
+  contact:
+    name: Darwin Padrino
+    email: drinowar@gmail.com
+    url: https://github.com/dpadrino/pos-peripherals-agent
+  license:
+    name: Proprietary Commercial EULA (c) 2026 Darwin Padrino. All rights reserved.
+    url: https://github.com/dpadrino/pos-peripherals-agent/blob/main/LICENSE.txt
+
+servers:
+  - url: http://127.0.0.1:8989
+    description: Servidor Local Principal Unificado (Todos los periféricos)
+  - url: http://127.0.0.1:8002
+    description: Servidor Local Secundario (Retrocompatibilidad Tickets POS-80)
+  - url: http://127.0.0.1:8003
+    description: Servidor Local Secundario (Retrocompatibilidad Etiquetas TSPL / Cloud POS)
+
+tags:
+  - name: Báscula (Scale)
+    description: Lectura de peso en tiempo real desde balanzas seriales o USB.
+  - name: Tickets POS
+    description: Impresión silenciosa en PDF de tickets y comprobantes térmicos.
+  - name: Gaveta de Dinero (Cash Drawer)
+    description: Disparo y apertura de gavetas de dinero conectadas por RJ11/RJ12 a impresoras POS.
+  - name: Etiquetas (Labels)
+    description: Impresión de etiquetas de código de barras en formato RAW (TSPL / ZPL).
+  - name: Forma Continua / Matriz
+    description: Impresión de facturas y notas de remisión en texto plano / ESC/P para impresoras de impacto/agujas.
+  - name: Documentos / Láser
+    description: Impresión silenciosa de documentos de oficina, hojas membretadas y reportes ejecutivos (PDF, A4/Carta) en impresoras láser o de inyección de tinta.
+  - name: Mantenimiento y Diagnóstico
+    description: Catálogo de impresoras del SO, purga de colas y comprobación de salud.
+
+paths:
+  /:
+    get:
+      summary: Panel Visual de Autodiagnóstico (Dashboard HTML)
+      description: Retorna una interfaz gráfica web embebida con semáforos de conexión, lectura de peso en vivo y botones de prueba.
+      tags:
+        - Mantenimiento y Diagnóstico
+      responses:
+        '200':
+          description: Panel web interactivo cargado exitosamente.
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /peso:
+    get:
+      summary: Obtener Peso de la Báscula (Alias en Español)
+      description: |
+        Retorna el peso actual capturado desde la báscula física real en el puerto serial COM/USB.
+        En producción (`simulation_mode = false`), si no hay báscula física conectada, retorna HTTP 503 (CERO falsos positivos).
+        Los parámetros `simulate`, `mock`, `test`, `weight`, `unit` y `stable` solo se aceptan cuando `simulation_mode = true`; en caso contrario retornan HTTP 403.
+        Una unidad inválida o un peso negativo/no finito retorna HTTP 400. La secuencia simulada se convierte de kg a lb; un peso fijo se interpreta en la unidad pedida.
+      tags:
+        - Báscula (Scale)
+      parameters:
+        - name: simulate
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Activa emulación solo cuando simulation_mode=true en el agente.
+        - name: mock
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Alias de simulate; requiere simulation_mode=true.
+        - name: test
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Alias de simulación, disponible solo con simulation_mode=true.
+        - name: weight
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+          description: Peso de prueba finito y no negativo; su unidad es la indicada en unit.
+        - name: unit
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [kg, lb]
+            default: kg
+          description: Unidad para simulación. La secuencia de prueba en kg se convierte a lb.
+        - name: stable
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Indicador controlable únicamente en lecturas simuladas.
+      responses:
+        '200':
+          description: Lectura de peso exitosa (física o emulada).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightResponse'
+              example:
+                peso: 1.250
+                peso_leido: "01.250"
+                puerto: "COM3"
+                is_simulated: false
+                unit: "kg"
+                is_stable: false
+        '400':
+          description: Unidad o peso simulado inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: La simulación está deshabilitada en esta configuración.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: No se detectó ninguna báscula física conectada (protección contra falsos positivos).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                message: "Error de puerto serial en báscula: No se detectó báscula física conectada. Verifique la conexión USB/Serial."
+
+  /weight:
+    get:
+      summary: Get Scale Weight (English endpoint)
+      description: English alias for `/peso`. Simulation controls are rejected with HTTP 403 unless `simulation_mode=true`; invalid units and weights return HTTP 400.
+      tags:
+        - Báscula (Scale)
+      parameters:
+        - name: simulate
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: mock
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: test
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: weight
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+        - name: unit
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [kg, lb]
+            default: kg
+          description: Unidad simulada; use solo con simulation_mode=true.
+        - name: stable
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Indicador configurable solo para lecturas simuladas.
+      responses:
+        '200':
+          description: Weight reading successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeightResponse'
+        '503':
+          description: Scale not connected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Invalid simulation weight or unit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Simulation disabled in this configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ticket:
+    post:
+      summary: Impresión Inteligente y Unificada de Ticket (JSON / Multipart / Texto)
+      description: |
+        Endpoint universal para emitir tickets desde frontend web o backend.
+        Soporta:
+        - JSON: `{"content": "..."}`, `{"text": "..."}` o `{"url": "https://..."}`
+        - Multipart: `file=@ticket.pdf`
+        - Texto plano o comandos ESC/POS directos en el cuerpo
+      tags:
+        - Tickets POS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Texto o comandos ESC/POS a imprimir en el ticket.
+                text:
+                  type: string
+                  description: Alias alternativo de content.
+                url:
+                  type: string
+                  description: URL final remota que responde directamente con PDF; no se siguen redirects.
+                printer:
+                  type: string
+                  description: Nombre de la impresora específica (opcional).
+            example:
+              content: "TIENDA DEMO\nTicket de Venta #001\nTotal: $15.50\nGracias por su compra!\n"
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                printer:
+                  type: string
+      responses:
+        '200':
+          description: Ticket despachado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintResponse'
+
+  /drawer:
+    post:
+      summary: Abrir Gaveta de Dinero (Cash Drawer RJ11/RJ12)
+      description: |
+        Envía el pulso de apertura estándar ESC/POS (Pin 2 y Pin 5) a la impresora térmica de tickets
+        para accionar el solenoide de la gaveta de dinero física sin imprimir papel.
+      tags:
+        - Gaveta de Dinero (Cash Drawer)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                printer:
+                  type: string
+                  description: Impresora a la que está conectada la gaveta (opcional, usa la ticketera predeterminada).
+      responses:
+        '200':
+          description: Pulso de apertura enviado con éxito a la gaveta de dinero.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawerResponse'
+  /gaveta:
+    post:
+      summary: Abrir Gaveta de Dinero (Alias en Español)
+      description: Alias directo en español para `/drawer`.
+      tags:
+        - Gaveta de Dinero (Cash Drawer)
+      responses:
+        '200':
+          description: Pulso de apertura enviado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrawerResponse'
+  /print:
+    post:
+      summary: Imprimir Ticket PDF (Multipart Form)
+      description: Recibe un archivo PDF binario y lo envía silenciosamente a la impresora térmica seleccionada o predeterminada.
+      tags:
+        - Tickets POS
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Archivo PDF del ticket a imprimir.
+                printer:
+                  type: string
+                  description: Nombre de la impresora (opcional, si se omite auto-detecta la ticketera activa).
+                  example: "POS-80"
+                sumatra_print_settings:
+                  type: string
+                  description: Ajustes de impresión de SumatraPDF (por defecto noscale).
+                  example: "noscale"
+      responses:
+        '200':
+          description: Documento enviado a la impresora exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintResponse'
+
+  /impresora:
+    post:
+      summary: Imprimir Ticket PDF (Alias en Español)
+      tags:
+        - Tickets POS
+      requestBody:
+        $ref: '#/paths/~1print/post/requestBody'
+      responses:
+        '200':
+          $ref: '#/paths/~1print/post/responses/200'
+
+  /print/url:
+    post:
+      summary: Imprimir Ticket PDF desde URL Remota
+      description: Descarga el PDF desde la URL final proporcionada y lo envía silenciosamente a la impresora térmica. Las respuestas de redirección se rechazan.
+      tags:
+        - Tickets POS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: URL HTTP(S) final que responde directamente con el archivo PDF. Las redirecciones se rechazan.
+                  example: "https://mi-erp.com/invoices/1054/pdf"
+                printer:
+                  type: string
+                  description: Nombre de la impresora (opcional).
+                  example: "POS-80"
+      responses:
+        '200':
+          description: Documento descargado e impreso satisfactoriamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintResponse'
+
+  /impresora/url:
+    post:
+      summary: Imprimir Ticket PDF desde URL Remota (Alias en Español)
+      tags:
+        - Tickets POS
+      requestBody:
+        $ref: '#/paths/~1print~1url/post/requestBody'
+      responses:
+        '200':
+          $ref: '#/paths/~1print~1url/post/responses/200'
+
+  /print-label:
+    post:
+      summary: Imprimir Etiqueta RAW (TSPL / ZPL)
+      description: Envía instrucciones en lenguaje RAW (TSPL / ZPL / ESC-POS) directamente a la impresora de etiquetas mediante Direct USB y Spooler RAW.
+      tags:
+        - Etiquetas (Labels)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelPrintRequest'
+            example:
+              language: "TSPL"
+              printer: "3nStar 4B-2054L"
+              commands: "SIZE 60 mm,45 mm\r\nGAP 3 mm,0 mm\r\nCLS\r\nTEXT 50,40,\"3\",0,1,1,\"OMNIBRIDGE POS\"\r\nBARCODE 50,110,\"128\",60,1,0,2,2,\"759123456789\"\r\nPRINT 1,1\r\n"
+      responses:
+        '200':
+          description: Etiqueta enviada correctamente a la impresora.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelPrintResponse'
+    get:
+      summary: Consultar Estado del Servicio de Etiquetas
+      description: Retorna el estado del servicio TSPL y el nombre de la impresora de etiquetas detectada en el sistema.
+      tags:
+        - Etiquetas (Labels)
+      responses:
+        '200':
+          description: Servicio activo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  service:
+                    type: string
+                  port:
+                    type: integer
+                  detectedPrinter:
+                    type: string
+                  message:
+                    type: string
+
+  /impresora/etiqueta:
+    post:
+      summary: Imprimir Etiqueta RAW (Alias en Español)
+      tags:
+        - Etiquetas (Labels)
+      requestBody:
+        $ref: '#/paths/~1print-label/post/requestBody'
+      responses:
+        '200':
+          $ref: '#/paths/~1print-label/post/responses/200'
+
+  /print-matrix:
+    post:
+      summary: Imprimir en Forma Continua / Matriz de Punto (Texto RAW / ESC-P)
+      description: Envía texto plano o comandos ESC/P directamente a la impresora de agujas en modo RAW con soporte opcional de Form Feed (\x0c).
+      tags:
+        - Forma Continua / Matriz
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatrixPrintRequest'
+            example:
+              text: "========================================\r\nNOTA DE ENTREGA #1045\r\n========================================\r\n01 Cemento Gris x 42.5kg      $12.50\r\n02 Cabilla 1/2 pulgada         $8.00\r\n----------------------------------------\r\nTOTAL:                        $20.50\r\n"
+              printer: "Generic / Text Only"
+              form_feed: true
+      responses:
+        '200':
+          description: Impresión despachada exitosamente a la impresora de matriz.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixPrintResponse'
+    get:
+      summary: Consultar Estado e Impresora de Matriz Detectada
+      description: Retorna el estado del servicio y la impresora de forma continua seleccionada.
+      tags:
+        - Forma Continua / Matriz
+      responses:
+        '200':
+          description: Estado del servicio retornado.
+
+  /impresora/matriz:
+    post:
+      summary: Imprimir en Forma Continua / Matriz de Punto (Alias en Español)
+      tags:
+        - Forma Continua / Matriz
+      requestBody:
+        $ref: '#/paths/~1print-matrix/post/requestBody'
+      responses:
+        '200':
+          $ref: '#/paths/~1print-matrix/post/responses/200'
+
+  /api/v1/print/document:
+    post:
+      summary: Imprimir Documento de Oficina en Impresora Láser / Inyección (Multipart)
+      description: |
+        Recibe un archivo PDF o TXT de tamaño completo (Carta / A4 / Legal) y lo envía a la impresora láser con ajuste automático de escala (`fit`).
+        
+        **IMPORTANTE (Condición Word/Excel):** Los archivos Microsoft Word (`.docx`, `.doc`) y Excel (`.xlsx`, `.xls`) NO se imprimen de forma directa en servicios desatendidos. El ERP o backend debe exportarlos o convertirlos a PDF (o `.txt`) antes de enviarlos al agente. Subir un archivo de Office retornará HTTP 400 Bad Request.
+      tags:
+        - Documentos / Láser
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Archivo PDF o documento TXT a imprimir. (Archivos .docx y .xlsx deben convertirse a PDF en el servidor previo al envío).
+                printer:
+                  type: string
+                  description: Nombre de la impresora láser destino. Si se omite, auto-detecta la mejor láser/multifuncional activa.
+                settings:
+                  type: string
+                  description: Configuración de escala de página en SumatraPDF (ej. `fit`, `shrink`, `noscale`).
+                  default: "fit"
+      responses:
+        '200':
+          description: Documento impreso exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintResponse'
+    get:
+      summary: Consultar Estado e Impresora Láser / Documentos Detectada
+      tags:
+        - Documentos / Láser
+      responses:
+        '200':
+          description: Estado del servicio de documentos y nombre de la impresora detectada.
+
+  /api/v1/print/document/url:
+    post:
+      summary: Imprimir Documento desde URL Remota o Contenido de Texto
+      description: Descarga un PDF desde su URL final directa o recibe texto plano para imprimir. Las redirecciones HTTP se rechazan.
+      tags:
+        - Documentos / Láser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: URL HTTP(S) final que responde directamente con el documento PDF.
+                  example: "https://mi-erp.com/reporte-cierre-caja.pdf"
+                text_content:
+                  type: string
+                  description: Contenido de texto plano si no se usa PDF.
+                printer:
+                  type: string
+                  example: "HP LaserJet Pro MFP"
+                settings:
+                  type: string
+                  default: "fit"
+                  example: "fit"
+      responses:
+        '200':
+          description: Documento enviado a la impresora láser.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintResponse'
+
+  /impresora/documento:
+    post:
+      summary: Imprimir Documento Láser / A4 (Alias en Español)
+      tags:
+        - Documentos / Láser
+      requestBody:
+        $ref: '#/paths/~1api~1v1~1print~1document/post/requestBody'
+      responses:
+        '200':
+          $ref: '#/paths/~1api~1v1~1print~1document/post/responses/200'
+
+  /printers:
+    get:
+      summary: Listar Catálogo Detallado de Impresoras
+      description: Retorna todas las impresoras instaladas en el sistema operativo con detalle de flags (is_pos, is_label, is_default, is_ready, status).
+      tags:
+        - Mantenimiento y Diagnóstico
+      responses:
+        '200':
+          description: Catálogo obtenido exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintersResponse'
+
+  /impresoras:
+    get:
+      summary: Listar Catálogo Detallado de Impresoras (Alias en Español)
+      tags:
+        - Mantenimiento y Diagnóstico
+      responses:
+        '200':
+          $ref: '#/paths/~1printers/get/responses/200'
+
+  /printers/cleanup:
+    post:
+      summary: Purgar Trabajos Trabados del Spooler de Windows
+      description: Elimina los trabajos pendientes o atascados en la cola de impresión de Windows para restaurar el flujo de impresión.
+      tags:
+        - Mantenimiento y Diagnóstico
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                printer:
+                  type: string
+                  description: Nombre de la impresora específica a purgar (si se omite, purga todas).
+      responses:
+        '200':
+          description: Cola purgada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrintResponse'
+
+  /impresoras/limpiar:
+    post:
+      summary: Purgar Trabajos Trabados del Spooler (Alias en Español)
+      tags:
+        - Mantenimiento y Diagnóstico
+      requestBody:
+        $ref: '#/paths/~1printers~1cleanup/post/requestBody'
+      responses:
+        '200':
+          $ref: '#/paths/~1printers~1cleanup/post/responses/200'
+
+  /health:
+    get:
+      summary: Estado Integral de Salud del Agente
+      description: Diagnóstico completo de puertos seriales, impresora predeterminada, etiquetadora y spooler.
+      tags:
+        - Mantenimiento y Diagnóstico
+      responses:
+        '200':
+          description: Estado de salud retornado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /status:
+    get:
+      summary: Estado Integral de Salud (Alias)
+      tags:
+        - Mantenimiento y Diagnóstico
+      responses:
+        '200':
+          $ref: '#/paths/~1health/get/responses/200'
+
+components:
+  schemas:
+    WeightResponse:
+      type: object
+      properties:
+        peso:
+          type: number
+          format: float
+          description: Peso numérico capturado.
+          example: 1.250
+        weight:
+          type: number
+          format: float
+          description: Numeric weight captured (English alias for international clients).
+          example: 1.250
+        peso_leido:
+          type: string
+          description: Cadena sin procesar recibida del puerto serial.
+          example: "01.250"
+        puerto:
+          type: string
+          description: Puerto COM o serial utilizado.
+          example: "COM3"
+        is_simulated:
+          type: boolean
+          description: Flag que indica si la lectura proviene del emulador/simulador o de hardware físico.
+          example: false
+        unit:
+          type: string
+          enum: [kg, lb]
+          description: Unidad indicada en la lectura.
+          example: kg
+        is_stable:
+          type: boolean
+          description: Solo es true para simulación configurable; lecturas físicas son false hasta validar estado estable por protocolo/modelo.
+          example: false
+
+    PrintResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        message:
+          type: string
+          example: "Documento impreso satisfactoriamente en 'POS-80'"
+        printer_used:
+          type: string
+          nullable: true
+          example: "POS-80"
+
+    DrawerResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        status:
+          type: string
+          example: "ok"
+        message:
+          type: string
+          example: "Pulso de apertura de gaveta de dinero enviado exitosamente a 'POS-80'"
+        printer_used:
+          type: string
+          nullable: true
+          example: "POS-80"
+
+    LabelPrintRequest:
+      type: object
+      required:
+        - commands
+      properties:
+        language:
+          type: string
+          description: Lenguaje de etiqueta (opcional, ej. TSPL, ZPL).
+          example: "TSPL"
+        printer:
+          type: string
+          description: Nombre específico de la impresora (opcional, si se omite auto-detecta).
+          example: "3nStar 4B-2054L"
+        commands:
+          type: string
+          description: Comandos RAW a enviar byte-a-byte.
+          example: "SIZE 60 mm,45 mm\r\nPRINT 1,1\r\n"
+
+    LabelPrintResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        mode:
+          type: string
+          description: Mecanismo de despacho empleado (DirectUSB, Spooler, UnixRaw o Simulation).
+          example: "DirectUSB"
+        message:
+          type: string
+          example: "Etiqueta TSPL enviada exitosamente a la impresora '3nStar 4B-2054L'."
+        detected_printer:
+          type: string
+          example: "3nStar 4B-2054L"
+
+    MatrixPrintRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Texto plano o comandos ESC/P a enviar en modo RAW a la impresora de matriz.
+          example: "FACTURA NRO 001\r\n"
+        printer:
+          type: string
+          description: Nombre específico de la impresora (opcional, auto-detecta si se omite).
+          example: "Generic / Text Only"
+        form_feed:
+          type: boolean
+          description: Avanza la hoja al final mediante caracter ASCII Form Feed (\x0c).
+          example: true
+
+    MatrixPrintResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        mode:
+          type: string
+          description: Mecanismo de despacho empleado (Winspool-RAW o CUPS-RAW).
+          example: "Winspool-RAW"
+        message:
+          type: string
+          example: "Impresión de forma continua enviada exitosamente a 'Generic / Text Only'."
+        detected_printer:
+          type: string
+          example: "Generic / Text Only"
+
+    PrinterDetail:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "POS-80"
+        is_default:
+          type: boolean
+          description: Es la impresora predeterminada en el sistema operativo.
+          example: true
+        is_pos:
+          type: boolean
+          description: Clasificada heurísticamente como impresora de tickets (80mm/58mm).
+          example: true
+        is_label:
+          type: boolean
+          description: Clasificada heurísticamente como impresora de etiquetas (TSPL/ZPL).
+          example: false
+        is_matrix:
+          type: boolean
+          description: Clasificada heurísticamente como impresora de matriz de punto / forma continua (Epson LX/FX/LQ, Oki, Generic Text).
+          example: false
+        is_document:
+          type: boolean
+          description: Clasificada heurísticamente como impresora láser, inyección de tinta o multifuncional de oficina (HP LaserJet, Epson EcoTank, Canon, Brother).
+          example: true
+        is_ready:
+          type: boolean
+          description: Reporta estado en línea y lista para recibir trabajos.
+          example: true
+        status:
+          type: string
+          example: "Normal"
+
+    PrintersResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        default:
+          type: string
+          example: "POS-80"
+        printers:
+          type: array
+          items:
+            type: string
+          example: ["POS-80", "3nStar 4B-2054L"]
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrinterDetail'
+
+    ScaleHealthInfo:
+      type: object
+      properties:
+        configured_port:
+          type: string
+          example: "auto"
+        active_port:
+          type: string
+          nullable: true
+          example: "COM3"
+        available_ports:
+          type: array
+          items:
+            type: string
+          example: ["COM1", "COM3"]
+        baud_rate:
+          type: integer
+          example: 9600
+        simulation_mode:
+          type: boolean
+          example: false
+
+    PrinterHealthInfo:
+      type: object
+      properties:
+        configured_default:
+          type: string
+          example: "POS-80"
+        system_default:
+          type: string
+          nullable: true
+          example: "POS-80C (Copy 1)"
+        printers_detected:
+          type: integer
+          example: 2
+        spooler_ready:
+          type: boolean
+          example: true
+
+    LabelPrinterHealthInfo:
+      type: object
+      properties:
+        configured_default:
+          type: string
+          example: "3nStar 4B-2054L"
+        detected_printer:
+          type: string
+          nullable: true
+          example: "3nStar 4B-2054L"
+
+    MatrixPrinterHealthInfo:
+      type: object
+      properties:
+        configured_default:
+          type: string
+          example: "Generic / Text Only"
+        detected_printer:
+          type: string
+          nullable: true
+          example: "Generic / Text Only"
+
+    DocumentPrinterHealthInfo:
+      type: object
+      properties:
+        configured_default:
+          type: string
+          example: "auto"
+        detected_printer:
+          type: string
+          nullable: true
+          example: "HP LaserJet Pro MFP M428fdw"
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        service:
+          type: string
+          example: "pos-peripherals-agent"
+        version:
+          type: string
+          example: "0.1.0"
+        scale:
+          $ref: '#/components/schemas/ScaleHealthInfo'
+        printer:
+          $ref: '#/components/schemas/PrinterHealthInfo'
+        label_printer:
+          $ref: '#/components/schemas/LabelPrinterHealthInfo'
+        matrix_printer:
+          $ref: '#/components/schemas/MatrixPrinterHealthInfo'
+        document_printer:
+          $ref: '#/components/schemas/DocumentPrinterHealthInfo'
+        scale_port:
+          type: string
+          example: "COM3"
+        default_printer:
+          type: string
+          example: "POS-80C (Copy 1)"
+        default_label_printer:
+          type: string
+          example: "3nStar 4B-2054L"
+        default_matrix_printer:
+          type: string
+          example: "Generic / Text Only"
+        default_document_printer:
+          type: string
+          example: "HP LaserJet Pro MFP M428fdw"
+        simulation_mode:
+          type: boolean
+          example: false

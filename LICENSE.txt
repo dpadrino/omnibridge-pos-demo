@@ -1,0 +1,112 @@
+================================================================================
+OMNIBRIDGE POS™ — ACUERDO DE LICENCIA DE USUARIO FINAL Y DERECHOS PROPIETARIOS
+COMMERCIAL END-USER LICENSE AGREEMENT (EULA)
+================================================================================
+
+Versión del Software : 1.1.2
+Fecha de Emisión     : 4 de Octubre de 2026 (2026-10-04)
+Autor y Titular      : Darwin Padrino <drinowar@gmail.com>
+Producto             : OmniBridge POS™ (Universal POS Peripherals Gateway)
+Derechos de Autor    : (c) 2026 Darwin Padrino. Todos los derechos reservados.
+
+IMPORTANTE — LEA DETENIDAMENTE ANTES DE INSTALAR, COPIAR O UTILIZAR ESTE SOFTWARE:
+
+El presente Acuerdo de Licencia de Usuario Final ("EULA") es un acuerdo legal vinculante entre
+Usted (ya sea una persona natural o una entidad jurídica, en adelante el "Licenciatario") y
+Darwin Padrino (en adelante el "Licenciante" o "Autor"), titular exclusivo de todos los derechos
+de autor, patentes, marcas y propiedad intelectual del software "OmniBridge POS" (incluyendo
+código binario, scripts, instaladores, documentación y servicios relacionados).
+
+Al instalar, descargar, copiar o utilizar este software de cualquier manera, el Licenciatario
+acepta expresamente estar sujeto a los términos y condiciones de este contrato. Si no está de
+acuerdo con estos términos, NO instale, NO copie ni utilice el Software.
+
+--------------------------------------------------------------------------------
+1. CONCESIÓN DE LICENCIA COMERCIAL
+--------------------------------------------------------------------------------
+Sujeto al pago íntegro de las tarifas aplicables de adquisición o suscripción, el Licenciante
+otorga al Licenciatario una licencia de uso limitada, no exclusiva, intransferible y revocable:
+
+a) Licencia por Estación de Caja (Per-Seat / Per-Node):
+   Autoriza la instalación y ejecución de una (1) copia del Software en una única estación de
+   facturación o computadora física/virtual dedicada al punto de venta.
+
+b) Licencia Corporativa / Red (Site License):
+   Si se ha suscrito explícitamente una licencia de sitio, autoriza el despliegue del Software en el
+   número específico de cajas o sucursales acordadas por escrito en la orden de compra.
+
+c) Licencia OEM / Marca Blanca (White-Label):
+   Requiere un anexo comercial suscrito por separado. Ningún licenciatario está facultado para
+   renombrar, empaquetar o redistribuir este Software como propio sin autorización expresa y
+   por escrito del Autor.
+
+--------------------------------------------------------------------------------
+2. RESTRICCIONES Y PROTECCIÓN DE PROPIEDAD INTELECTUAL
+--------------------------------------------------------------------------------
+El Licenciatario NO PODRÁ, ni permitirá a terceros:
+
+1. Descompilar, desensamblar, aplicar ingeniería inversa, descifrar o intentar descubrir el código
+   fuente del Software o los algoritmos de comunicación serial, USB y spooler que incorpora.
+2. Modificar, adaptar, traducir o crear obras derivadas basadas en el Software.
+3. Alquilar, arrendar, prestar, revender, sublicenciar, distribuir públicamente o alojar el
+   Software como un servicio SaaS multi-inquilino abierto a terceros no autorizados.
+4. Eliminar, alterar, ocultar o manipular cualquier aviso de derechos de autor, etiquetas de versión,
+   metadatos de autoría o encabezados de licencia emitidos por el ejecutable o sus endpoints HTTP.
+5. Eludir o intentar deshabilitar los mecanismos de licenciamiento, protección o validación de
+   hardware incorporados en el Software.
+
+--------------------------------------------------------------------------------
+3. PROPIEDAD Y RESERVA DE DERECHOS
+--------------------------------------------------------------------------------
+El Software se otorga bajo LICENCIA, NO SE VENDE. Darwin Padrino retiene la propiedad total,
+exclusiva y absoluta de todos los derechos de autor, secretos comerciales, patentes, marcas
+registradas y demás derechos de propiedad intelectual del Software en todo el mundo. Todos los
+derechos no otorgados expresamente en este contrato quedan reservados por el Licenciante.
+
+--------------------------------------------------------------------------------
+4. COMPONENTES Y LIBRERÍAS DE TERCEROS
+--------------------------------------------------------------------------------
+El Software puede interactuar con utilidades auxiliares de distribución estándar (tales como
+SumatraPDF o NSSM) o vincular librerías bajo licencias de código abierto compatibles. Dichos
+componentes se rigen por sus respectivos términos de licencia de origen y se integran únicamente
+como intermediarios técnicos de ejecución en el sistema operativo.
+
+--------------------------------------------------------------------------------
+5. EXCLUSIÓN DE GARANTÍAS ("AS IS")
+--------------------------------------------------------------------------------
+EL SOFTWARE SE SUMINISTRA "TAL CUAL" ("AS IS"), CON TODAS SUS FALLAS Y SIN GARANTÍAS DE NINGÚN
+TIPO, SEAN EXPRESAS, IMPLÍCITAS O LEGALES. EL AUTOR DESCONOCE EXPRESAMENTE CUALQUIER GARANTÍA
+IMPLÍCITA DE COMERCIABILIDAD, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EL AUTOR NO
+GARANTIZA QUE EL FUNCIONAMIENTO DEL SOFTWARE SEA ININTERRUMPIDO O LIBRE DE ERRORES, NI QUE LOS
+DISPOSITIVOS DE HARDWARE DEFECTUOSOS O NO ESTÁNDAR SEAN COMPATIBLES SIN LA DEBIDA HOMOLOGACIÓN.
+
+--------------------------------------------------------------------------------
+6. LIMITACIÓN DE RESPONSABILIDAD
+--------------------------------------------------------------------------------
+EN LA MÁXIMA MEDIDA PERMITIDA POR LA LEY APLICABLE, EN NINGÚN CASO EL LICENCIANTE SERÁ
+RESPONSABLE POR DAÑOS DIRECTOS, INDIRECTOS, INCIDENTALES, ESPECIALES, CONSECUENTES O PUNITIVOS
+(INCLUYENDO, SIN LIMITACIÓN, PÉRDIDA DE BENEFICIOS COMERCIALES, INTERRUPCIÓN DEL NEGOCIO,
+PÉRDIDA DE INFORMACIÓN CONTABLE O MONETARIA, FALLAS EN EL COBRO O LECTURA DE PESAJES)
+DERIVADOS DEL USO O DE LA INCAPACIDAD DE USO DEL SOFTWARE, INCLUSO SI EL LICENCIANTE HUBIESE SIDO
+ADVERTIDO DE LA POSIBILIDAD DE DICHOS DAÑOS.
+
+--------------------------------------------------------------------------------
+7. VIGENCIA Y RESCISIÓN
+--------------------------------------------------------------------------------
+Este Acuerdo tendrá vigencia desde la fecha de instalación o adquisición del Software. El contrato
+se extinguirá de forma inmediata y automática, sin necesidad de notificación judicial o previa,
+si el Licenciatario incumple cualquiera de las cláusulas o restricciones estipuladas. Tras la
+rescisión, el Licenciatario deberá destruir de forma inmediata y verificable todas las copias del
+Software en su poder o bajo su control.
+
+--------------------------------------------------------------------------------
+8. CONTACTO DEL TITULAR Y SOPORTE
+--------------------------------------------------------------------------------
+Para soporte técnico, homologación de básculas o adquisición de licencias comerciales y OEM:
+- Autor       : Darwin Padrino
+- Correo      : drinowar@gmail.com
+- Repositorio : https://github.com/dpadrino/pos-peripherals-agent
+
+================================================================================
+FIN DEL ACUERDO DE LICENCIA COMERCIAL — OMNIBRIDGE POS™ v1.1.1
+================================================================================

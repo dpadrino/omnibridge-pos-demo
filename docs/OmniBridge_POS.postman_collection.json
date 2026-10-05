@@ -1,0 +1,599 @@
+{
+	"info": {
+		"_postman_id": "c71a3994-f254-47e1-8841-94e8f192b901",
+		"name": "OmniBridge POS — Peripherals Hardware Gateway",
+		"description": "Colección oficial de pruebas para el Agente Local de Periféricos en Rust (OmniBridge POS). Permite probar Báscula Serial, Impresora de Tickets POS-80 y Etiquetadora TSPL/ZPL en 1-click.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "⚖️ Báscula (Scale)",
+			"item": [
+				{
+					"name": "Obtener Peso Actual (GET /peso)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/peso",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"peso"
+							]
+						},
+						"description": "Retorna el peso numérico actual capturado desde el puerto serial COM/USB activo o del ciclo de simulación."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scale Weight (GET /weight)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/weight",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"weight"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "🧪 Modo Pruebas - Emular Peso (GET /peso?simulate=true)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/peso?simulate=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"peso"
+							],
+							"query": [
+								{
+									"key": "simulate",
+									"value": "true",
+									"description": "Fuerza modo emulación sin báscula física"
+								}
+							]
+						},
+						"description": "Permite al desarrollador probar la captura de peso sin tener hardware físico conectado."
+					},
+					"response": []
+				},
+				{
+					"name": "🧪 Modo Pruebas - Inyectar Peso Fijo (GET /peso?weight=2.450)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/peso?weight=2.450",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"peso"
+							],
+							"query": [
+								{
+									"key": "weight",
+									"value": "2.450",
+									"description": "Inyecta un valor de peso específico para pruebas automáticas"
+								}
+							]
+						},
+						"description": "Inyecta un peso exacto específico para tests de integración en el ERP o frontend."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🧾 Impresión de Tickets POS",
+			"item": [
+				{
+					"name": "Imprimir Ticket PDF vía Formulario (POST /impresora)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"description": "Seleccionar archivo PDF del ticket"
+								},
+								{
+									"key": "printer",
+									"value": "POS-80",
+									"type": "text",
+									"description": "Nombre de la impresora (opcional, si se omite auto-detecta)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/impresora",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"impresora"
+							]
+						},
+						"description": "Envía un PDF binario a imprimir de forma silenciosa e instantánea."
+					},
+					"response": []
+				},
+				{
+					"name": "Imprimir Ticket PDF vía URL Remota (POST /impresora/url)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://pdfobject.com/pdf/sample.pdf\",\n    \"printer\": \"POS-80\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/impresora/url",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"impresora",
+								"url"
+							]
+						},
+						"description": "Descarga automáticamente el PDF desde la URL especificada y lo despacha a la impresora térmica."
+					},
+					"response": []
+				},
+				{
+					"name": "Imprimir Ticket Inteligente (JSON / Texto) (POST /ticket)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"========================================\\r\\n          OMNIBRIDGE POS - TICKET        \\r\\n========================================\\r\\nProducto 1              x1       $10.00\\r\\nProducto 2              x2        $5.00\\r\\n----------------------------------------\\r\\nTOTAL:                           $15.00\\r\\n========================================\\r\\n     ¡Gracias por su preferencia!       \\r\\n\\r\\n\",\n    \"printer\": \"POS-80\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/ticket",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ticket"
+							]
+						},
+						"description": "Despacha un ticket térmico enviando un cuerpo JSON o texto directo, tal como se muestra en el folleto."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "💵 Gaveta de Dinero (Cash Drawer)",
+			"item": [
+				{
+					"name": "Abrir Gaveta de Dinero (POST /drawer)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/drawer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"drawer"
+							]
+						},
+						"description": "Envía el pulso de apertura estándar ESC/POS al conector RJ11/RJ12 de la ticketera."
+					},
+					"response": []
+				},
+				{
+					"name": "Abrir Gaveta de Dinero (POST /gaveta)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/gaveta",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"gaveta"
+							]
+						},
+						"description": "Envía el pulso de apertura de gaveta mediante POST."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🏷️ Impresión de Etiquetas TSPL",
+			"item": [
+				{
+					"name": "Imprimir Etiqueta Código de Barras (POST /print-label)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"language\": \"TSPL\",\n    \"printer\": \"3nStar 4B-2054L\",\n    \"commands\": \"SIZE 60 mm,45 mm\\r\\nGAP 3 mm,0 mm\\r\\nCLS\\r\\nTEXT 40,30,\\\"3\\\",0,1,1,\\\"OMNIBRIDGE POS\\\"\\r\\nTEXT 40,70,\\\"2\\\",0,1,1,\\\"Prueba de Etiqueta TSPL\\\"\\r\\nBARCODE 40,120,\\\"128\\\",60,1,0,2,2,\\\"759123456789\\\"\\r\\nPRINT 1,1\\r\\n\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/print-label",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"print-label"
+							]
+						},
+						"description": "Envía comandos RAW en lenguaje TSPL directamente al cabezal térmico de la etiquetadora."
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar Estado Etiquetadora (GET /print-label)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/print-label",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"print-label"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Imprimir Etiqueta en Puerto Legacy 8003 (POST /print-label)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"commands\": \"SIZE 60 mm,45 mm\\r\\nGAP 3 mm,0 mm\\r\\nCLS\\r\\nTEXT 50,40,\\\"3\\\",0,1,1,\\\"DEMO POS 8003\\\"\\r\\nBARCODE 50,110,\\\"128\\\",60,1,0,2,2,\\\"80038003\\\"\\r\\nPRINT 1,1\\r\\n\"\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8003/print-label",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8003",
+							"path": [
+								"print-label"
+							]
+						},
+						"description": "Comprueba la compatibilidad directa con clientes web de punto de venta y sistemas externos en el puerto 8003."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📄 Forma Continua (Matriz de Punto)",
+			"item": [
+				{
+					"name": "Imprimir Texto en Forma Continua (POST /print-matrix)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"text\": \"========================================\\r\\n        OMNIBRIDGE POS - FORMA CONTINUA \\r\\n========================================\\r\\nDoc. de Prueba: REMISION / FACTURA      \\r\\nMotor: Windows Spooler RAW / ESC-P      \\r\\n----------------------------------------\\r\\n01  Item de Prueba Forma Continua   1.00\\r\\n========================================\\r\\n      AVANCE AUTOMATICO DE PAGINA (FF)  \\r\\n========================================\\r\\n\",\n    \"form_feed\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/print-matrix",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"print-matrix"
+							]
+						},
+						"description": "Envía texto plano o comandos ESC/P en modo RAW a la impresora de agujas para formas continuas con avance de página Form Feed."
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar Servicio de Matriz (GET /print-matrix)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/print-matrix",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"print-matrix"
+							]
+						},
+						"description": "Consulta el estado del servicio y la impresora de matriz de punto o forma continua auto-detectada."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📑 Documentos Láser / Oficina (A4, Carta)",
+			"item": [
+				{
+					"name": "Imprimir Documento PDF vía Formulario (POST /api/v1/print/document)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"description": "Seleccionar archivo PDF tamaño A4, Carta o Legal"
+								},
+								{
+									"key": "printer",
+									"value": "",
+									"type": "text",
+									"description": "Nombre de la impresora láser/multifuncional (opcional, si se omite auto-detecta)"
+								},
+								{
+									"key": "settings",
+									"value": "fit",
+									"type": "text",
+									"description": "Ajuste de página: 'fit' (ajuste proporcional hoja completa), 'noscale', 'shrink'"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/print/document",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"print",
+								"document"
+							]
+						},
+						"description": "Envía un PDF de oficina (factura fiscal, reporte contable, contrato) con escalado proporcional 'fit' para hoja completa A4/Carta."
+					},
+					"response": []
+				},
+				{
+					"name": "Imprimir Documento PDF vía URL Remota (POST /api/v1/print/document/url)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://pdfobject.com/pdf/sample.pdf\",\n    \"printer\": \"auto\",\n    \"settings\": \"fit\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/print/document/url",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"print",
+								"document",
+								"url"
+							]
+						},
+						"description": "Descarga de forma segura el PDF generado por el backend ERP/Cloud y lo imprime silenciosamente en la impresora láser predeterminada."
+					},
+					"response": []
+				},
+				{
+					"name": "Imprimir Reporte de Texto Plano en Hoja Completa (POST /api/v1/print/document)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"text_content\": \"============================================================\\r\\n                OMNIBRIDGE POS - INFORME GERENCIAL          \\r\\n============================================================\\r\\nFecha de Emisión: 2026-10-03                                \\r\\nEstación: CAJA PRINCIPAL #01                                \\r\\nTipo de Salida: Impresora Láser / Inyección de Tinta (A4)   \\r\\n------------------------------------------------------------\\r\\nVenta Total del Día:  $ 12,450.00                           \\r\\nTransacciones:        145 operaciones                       \\r\\n============================================================\\r\\n\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/print/document",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"print",
+								"document"
+							]
+						},
+						"description": "Imprime reportes de texto plano directamente en impresoras de oficina sin necesidad de renderizar PDF previo."
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar Servicio de Documentos Láser (GET /api/v1/print/document)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/print/document",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"print",
+								"document"
+							]
+						},
+						"description": "Consulta el estado del servicio y la impresora láser o de oficina auto-detectada en el sistema."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🖨️ Diagnóstico y Mantenimiento",
+			"item": [
+				{
+					"name": "Catálogo Detallado de Impresoras (GET /printers)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/printers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"printers"
+							]
+						},
+						"description": "Lista todas las impresoras instaladas con banderas clasificatorias: is_pos, is_label, is_default, is_ready."
+					},
+					"response": []
+				},
+				{
+					"name": "Purgar Colas Trabadas del Spooler (POST /printers/cleanup)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"printer\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/printers/cleanup",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"printers",
+								"cleanup"
+							]
+						},
+						"description": "Sanea y desbloquea el servicio Spooler de Windows eliminando trabajos huérfanos o con error."
+					},
+					"response": []
+				},
+				{
+					"name": "Estado Integral de Salud (GET /health)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Panel Web de Control (GET /)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Retorna la interfaz web interactiva HTML/CSS para técnicos y cajeros."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://127.0.0.1:8989",
+			"type": "string"
+		},
+		{
+			"key": "legacyPrintUrl",
+			"value": "http://127.0.0.1:8002",
+			"type": "string"
+		},
+		{
+			"key": "legacyLabelUrl",
+			"value": "http://127.0.0.1:8003",
+			"type": "string"
+		}
+	]
+}
