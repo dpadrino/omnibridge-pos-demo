@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniBridge POS™ — Guía Visual Interactiva & Demostración de Hardware</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090D16;
+      --card-bg: rgba(17, 24, 39, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #2563EB;
+      --primary-glow: rgba(37, 99, 235, 0.35);
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.25);
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(37, 99, 235, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 70%, rgba(16, 185, 129, 0.08) 0%, transparent 45%);
+    }
+
+    /* Container & Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    header { padding: 40px 0 20px; text-align: center; }
+    
+    .badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid rgba(37, 99, 235, 0.4);
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #93C5FD;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: 0 auto 36px;
+    }
+
+    /* Interactive Hardware Playground */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 48px 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    .playground-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+    @media (max-width: 900px) {
+      .playground-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-bad { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-good { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    /* Thermal Receipt Simulation */
+    .receipt-paper {
+      background: #FDFBF7;
+      color: #1E293B;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 24px;
+      border-radius: 4px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      position: relative;
+      margin: 20px 0;
+      border-top: 6px dashed #CBD5E1;
+      border-bottom: 6px dashed #CBD5E1;
+      transition: all 0.3s ease;
+    }
+    .receipt-paper.printed {
+      animation: printSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes printSlide {
+      from { transform: translateY(-30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .watermark-demo {
+      color: #DC2626;
+      font-weight: 800;
+      text-align: center;
+      margin: 10px 0;
+      border: 1px dashed #DC2626;
+      padding: 4px;
+      font-size: 0.75rem;
+      border-radius: 4px;
+    }
+
+    /* Scale Weight Box */
+    .scale-box {
+      background: #020617;
+      border: 2px solid #1E293B;
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .weight-display {
+      font-family: var(--font-mono);
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: #38BDF8;
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      margin: 10px 0;
+    }
+    .weight-unit { font-size: 1.2rem; color: #94A3B8; }
+
+    /* Interactive Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      border: none;
+      width: 100%;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px var(--primary-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px var(--primary-glow); }
+    .btn-accent {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: #FFFFFF;
+      box-shadow: 0 8px 20px var(--accent-glow);
+    }
+    .btn-accent:hover { transform: translateY(-2px); }
+
+    /* Code Tabs & Showcase */
+    .code-window {
+      background: #0B1120;
+      border: 1px solid #1E293B;
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 24px 0;
+    }
+    .window-header {
+      background: #111827;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #1E293B;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #EF4444; }
+    .dot-yellow { background: #F59E0B; }
+    .dot-green { background: #10B981; }
+    .window-title { font-size: 0.8rem; color: #94A3B8; margin-left: 12px; font-family: var(--font-mono); }
+    
+    pre {
+      padding: 24px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #E2E8F0;
+      overflow-x: auto;
+    }
+    .token-keyword { color: #F472B6; font-weight: 600; }
+    .token-func { color: #60A5FA; }
+    .token-str { color: #A7F3D0; }
+    .token-comment { color: #64748B; font-style: italic; }
+
+    /* Plans Grid */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin: 40px 0 60px;
+    }
+    .plan-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .plan-card.featured {
+      border-color: #3B82F6;
+      background: linear-gradient(180deg, rgba(37, 99, 235, 0.12) 0%, rgba(17, 24, 39, 0.85) 100%);
+      box-shadow: 0 0 35px rgba(37, 99, 235, 0.2);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2563EB;
+      color: #FFFFFF;
+      padding: 4px 16px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+    .plan-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+    .plan-target { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
+    .plan-price { font-size: 2.4rem; font-weight: 800; color: #FFFFFF; margin-bottom: 8px; }
+    .plan-period { font-size: 0.9rem; color: #94A3B8; font-weight: 500; }
+    .plan-features { list-style: none; margin: 24px 0 32px; flex-grow: 1; }
+    .plan-features li {
+      padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #CBD5E1;
+    }
+    .plan-features li::before {
+      content: '✓';
+      color: #10B981;
+      font-weight: 800;
+    }
+
+    /* Modal dialog mock (Chrome popup) */
+    .chrome-popup {
+      background: #FFFFFF;
+      color: #1F2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      margin: 20px 0;
+      border: 1px solid #E5E7EB;
+      position: relative;
+    }
+    .chrome-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #F3F4F6;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .chrome-body { font-size: 0.85rem; color: #4B5563; }
+    .pulse-danger { animation: pulseRed 2s infinite; }
+    @keyframes pulseRed {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="badge-top">⚡ Solución Definitiva en Rust • Sin Diálogos Ctrl+P</div>
+      <h1>OmniBridge POS™</h1>
+      <p class="tagline">
+        Conecta cualquier aplicación POS Web o Cloud (React, Vue, Laravel, Odoo, WooCommerce) 
+        con periféricos físicos de caja en milisegundos mediante llamadas HTTP locales.
+      </p>
+
+      <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+        <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" class="btn btn-primary" style="width: auto; padding: 14px 32px;">
+          📦 Descargar DEMO Gratuita (v1.1.8)
+        </a>
+        <a href="https://wa.me/584126165227?text=Hola%20Darwin,%20vi%20la%20guia%20visual%20de%20OmniBridge%20POS%20y%20quiero%20cotizar" target="_blank" class="btn btn-accent" style="width: auto; padding: 14px 32px;">
+          💬 Contactar por WhatsApp (+58 412-6165227)
+        </a>
+      </div>
+    </header>
+
+    <!-- SECTION: THE COMPARISON -->
+    <div class="section-title">El Problema de los Navegadores vs. La Solución OmniBridge POS</div>
+    <div class="playground-grid">
+      <!-- Old Way -->
+      <div class="card">
+        <div class="card-badge badge-bad">❌ ANTES (Sin Agente)</div>
+        <h3 style="margin-bottom: 12px; color: #F87171;">La Pesadilla de la Caja Registradora</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+          Al pulsar "Cobrar" en un POS web, Chrome abre su ventana de diálogo forzosa. El cajero pierde de 5 a 10 segundos por cliente confirmando la impresora y la balanza no puede ser leída:
+        </p>
+
+        <div class="chrome-popup pulse-danger">
+          <div class="chrome-header">
+            <span>🖨️ Imprimir — Google Chrome</span>
+            <span style="cursor: pointer; color: #9CA3AF;">✕</span>
+          </div>
+          <div class="chrome-body">
+            <p><strong>Destino:</strong> EPSON TM-T20III</p>
+            <p><strong>Páginas:</strong> Todo (1 página)</p>
+            <p style="color: #DC2626; margin-top: 8px;">⚠️ Esperando clic manual del cajero en "Imprimir"...</p>
+          </div>
+        </div>
+        <p style="font-size: 0.85rem; color: #EF4444; font-weight: 600;">
+          📉 Resultado: Colas lentas, quejas de clientes y errores al teclear el peso manual.
+        </p>
+      </div>
+
+      <!-- New Way -->
+      <div class="card" style="border-color: rgba(16, 185, 129, 0.4);">
+        <div class="card-badge badge-good">✅ AHORA (OmniBridge POS)</div>
+        <h3 style="margin-bottom: 12px; color: #34D399;">Impresión Silenciosa Instantánea (< 15ms)</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+          El sistema web envía un <code>POST /ticket</code> local. El agente en Rust despacha directamente al Spooler de Windows/Linux/macOS sin abrir ninguna ventana emergente:
+        </p>
+
+        <div class="receipt-paper" id="demoReceipt">
+          <div style="text-align: center; font-weight: 800; font-size: 1.05rem;">SUPERMERCADO LA GRANJA</div>
+          <div style="text-align: center; font-size: 0.75rem; color: #64748B;">CAJA #01 • TICKET #10842</div>
+          <div class="watermark-demo">*** MODO DEMO - OMNIBRIDGE POS ***</div>
+          <hr style="border: none; border-top: 1px dashed #CBD5E1; margin: 8px 0;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>1.250 kg Queso Llanero</span>
+            <span>$7.50</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>1x Refresco 2L</span>
+            <span>$2.50</span>
+          </div>
+          <hr style="border: none; border-top: 1px dashed #CBD5E1; margin: 8px 0;">
+          <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1rem;">
+            <span>TOTAL:</span>
+            <span>$10.00</span>
+          </div>
+          <div style="text-align: center; margin-top: 10px; font-size: 0.7rem; color: #64748B;">
+            ¡GRACIAS POR SU COMPRA!
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="simulateSilentPrint()">
+          ⚡ Simular Impresión Silenciosa en Vivo
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION: SCALE SIMULATION & HARDWARE DISPATCH -->
+    <div class="section-title">Balanza Electrónica RS232 & Apertura de Gaveta</div>
+    <div class="playground-grid">
+      <!-- Scale Box -->
+      <div class="card">
+        <h3 style="margin-bottom: 8px;">Captura de Peso en Tiempo Real</h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+          Ruta: <code>GET http://127.0.0.1:8989/peso</code> — Consulta directa al puerto COM.
+        </p>
+
+        <div class="scale-box">
+          <div style="font-size: 0.8rem; color: #64748B; letter-spacing: 0.1em;">LECTURA DIGITAL DE BALANZA</div>
+          <div class="weight-display" id="weightVal">1.250 <span class="weight-unit">KG</span></div>
+          <div style="display: inline-block; padding: 4px 12px; background: rgba(16, 185, 129, 0.2); color: #34D399; border-radius: 999px; font-size: 0.8rem; font-weight: 700;">
+            ● PESO ESTABLE (OK)
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" onclick="changeWeight(0.450)">Pesar 0.450 kg</button>
+          <button class="btn btn-primary" onclick="changeWeight(2.380)">Pesar 2.380 kg</button>
+          <button class="btn btn-primary" onclick="changeWeight(0.000)">Tarar (0 kg)</button>
+        </div>
+      </div>
+
+      <!-- Drawer Box -->
+      <div class="card">
+        <h3 style="margin-bottom: 8px;">Disparo de Gaveta de Dinero (RJ11)</h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+          Ruta: <code>POST http://127.0.0.1:8989/drawer</code> — Pulso eléctrico Pin 2 y 5.
+        </p>
+
+        <div style="background: #0F172A; border: 2px solid #1E293B; border-radius: 16px; padding: 36px 20px; text-align: center; margin: 20px 0;">
+          <div id="drawerIcon" style="font-size: 3.5rem; transition: transform 0.3s ease;">🔒</div>
+          <div id="drawerStatus" style="font-weight: 700; margin-top: 10px; color: #94A3B8;">Gaveta Cerrada</div>
+        </div>
+
+        <button class="btn btn-accent" onclick="triggerDrawer()">
+          ⚡ Disparar Pulso Eléctrico de Apertura
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION: DASHBOARD PREVIEW -->
+    <div class="section-title">Nuevo Asistente Visual y Activador de Licencias en el Host</div>
+    <div class="card" style="margin-bottom: 60px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center;">
+        <div>
+          <h3 style="font-size: 1.5rem; margin-bottom: 12px;">Configura tu equipo sin tocar código</h3>
+          <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 0.95rem;">
+            OmniBridge POS incluye un Asistente Visual accesible desde el navegador en <code>http://127.0.0.1:8989/</code>:
+          </p>
+          <ul style="list-style: none; margin-bottom: 24px; color: #CBD5E1; font-size: 0.9rem;">
+            <li style="padding: 6px 0;">🔍 <strong>Auto-detección inteligente:</strong> Lista en vivo de puertos COM seriales y nombres exactos de impresoras del sistema operativo.</li>
+            <li style="padding: 6px 0;">💾 <strong>Guardado en caliente:</strong> Actualiza y persiste el archivo <code>config.toml</code> sin reiniciar el servicio.</li>
+            <li style="padding: 6px 0;">🔐 <strong>In-App License Manager:</strong> Indicador de vigencia en tiempo real y activación en 1 clic cargando el archivo <code>.key</code>.</li>
+            <li style="padding: 6px 0;">🛡️ <strong>Verificación 100% Offline:</strong> Firma digital Ed25519 sin requerir conexión a internet en caja.</li>
+          </ul>
+          <a href="http://127.0.0.1:8989/" target="_blank" class="btn btn-primary" style="width: auto;">
+            Abrir Asistente Web en tu Host Local (:8989)
+          </a>
+        </div>
+
+        <div style="background: #020617; border: 1px solid #1E293B; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1E293B; padding-bottom: 10px; margin-bottom: 14px;">
+            <span style="font-size: 0.8rem; font-weight: 700; color: #38BDF8;">PANEL DE CONTROL — OMNIBRIDGE POS</span>
+            <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #34D399; padding: 2px 8px; border-radius: 4px;">Activo :8989</span>
+          </div>
+          <div style="font-size: 0.85rem; color: #CBD5E1; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748B;">Impresora de Tickets:</span>
+              <span style="font-family: var(--font-mono); color: #F1F5F9;">EPSON TM-T20III (Detectada)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748B;">Puerto Báscula:</span>
+              <span style="font-family: var(--font-mono); color: #38BDF8;">COM3 / auto (Activo)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #64748B;">Estado de Licencia:</span>
+              <span style="font-family: var(--font-mono); color: #F59E0B;">Modo DEMO (Cortesía Diaria)</span>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 8px;">
+              <span style="font-size: 0.78rem; color: #93C5FD;">💡 Arrastra tu archivo <code>license.key</code> aquí para activar sin reiniciar.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: CODE INTEGRATION -->
+    <div class="section-title">Integración en 3 Líneas de Código (Frontend JavaScript)</div>
+    <div class="code-window">
+      <div class="window-header">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="window-title">checkout.js — Integración directa con OmniBridge POS</span>
+      </div>
+      <pre><code><span class="token-comment">// 1. Leer peso en tiempo real de la báscula serial:</span>
+<span class="token-keyword">const</span> { peso } = <span class="token-keyword">await</span> (<span class="token-keyword">await</span> <span class="token-func">fetch</span>(<span class="token-str">'http://localhost:8989/peso'</span>)).<span class="token-func">json</span>();
+
+<span class="token-comment">// 2. Disparar apertura eléctrica de la gaveta de dinero:</span>
+<span class="token-keyword">await</span> <span class="token-func">fetch</span>(<span class="token-str">'http://localhost:8989/drawer'</span>, { method: <span class="token-str">'POST'</span> });
+
+<span class="token-comment">// 3. Despachar ticket térmico sin ventana emergente de Chrome (sub-segundo):</span>
+<span class="token-keyword">await</span> <span class="token-func">fetch</span>(<span class="token-str">'http://localhost:8989/ticket'</span>, {
+  method: <span class="token-str">'POST'</span>,
+  headers: { <span class="token-str">'Content-Type'</span>: <span class="token-str">'application/json'</span> },
+  body: JSON.<span class="token-func">stringify</span>({ content: <span class="token-str">"VENTA #101\nTotal: $25.00\nGRACIAS POR SU COMPRA\n"</span> })
+});</code></pre>
+    </div>
+
+    <!-- SECTION: COMMERCIAL PLANS -->
+    <div class="section-title">Planes Comerciales y Precios Oficiales</div>
+    <div class="plans-grid">
+      <!-- Plan 1 -->
+      <div class="plan-card">
+        <div class="plan-title">Estación / Caja Anual</div>
+        <div class="plan-target">Para supermercados, panaderías y tiendas</div>
+        <div class="plan-price">$35 <span class="plan-period">USD / año</span></div>
+        <ul class="plan-features">
+          <li>Instalador 1-clic como Servicio Windows</li>
+          <li>Lectura de báscula e impresiones ilimitadas</li>
+          <li>Cero marcas de agua de evaluación</li>
+          <li>Asistente gráfico web de configuración (:8989)</li>
+          <li>Soporte técnico directo de puesta en marcha</li>
+        </ul>
+        <a href="https://wa.me/584126165227?text=Hola%20Darwin,%20quiero%20comprar%20la%20Licencia%20Estacion%20Anual%20($35)" target="_blank" class="btn btn-primary">
+          Comprar Licencia Anual
+        </a>
+      </div>
+
+      <!-- Plan 2 -->
+      <div class="plan-card featured">
+        <div class="plan-badge">MÁS POPULAR RETAIL</div>
+        <div class="plan-title">Estación Indefinida</div>
+        <div class="plan-target">Licencia perpetua de por vida por caja</div>
+        <div class="plan-price">$90 <span class="plan-period">USD (Pago único)</span></div>
+        <ul class="plan-features">
+          <li>Todo lo incluido en el Plan Estación</li>
+          <li><strong>Vigencia indefinida</strong> sin renovación anual</li>
+          <li>Activación offline con firma digital Ed25519</li>
+          <li>Auto-purga de cola de impresión del sistema</li>
+          <li>Actualizaciones de mantenimiento incluidas</li>
+        </ul>
+        <a href="https://wa.me/584126165227?text=Hola%20Darwin,%20quiero%20comprar%20la%20Licencia%20Estacion%20Indefinida%20($90)" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);">
+          Comprar Licencia Indefinida
+        </a>
+      </div>
+
+      <!-- Plan 3 -->
+      <div class="plan-card">
+        <div class="plan-badge" style="background: #8B5CF6;">ESCALABILIDAD ILIMITADA</div>
+        <div class="plan-title">OEM / Marca Blanca</div>
+        <div class="plan-target">Para Casas de Software y creadores de ERPs/POS</div>
+        <div class="plan-price">$1,490 <span class="plan-period">USD (Pago único)</span></div>
+        <ul class="plan-features">
+          <li><strong>Distribución ilimitada</strong> a todos tus clientes</li>
+          <li>Bajo tu propio nombre comercial y logotipo</li>
+          <li><strong>Cero regalías por caja instalada</strong></li>
+          <li>Generador de licencias (Keygen) para tus clientes</li>
+          <li>Colección Postman y especificación OpenAPI 3.0</li>
+        </ul>
+        <a href="https://wa.me/584126165227?text=Hola%20Darwin,%20me%20interesa%20la%20Licencia%20OEM%20Marca%20Blanca%20($1,490)" target="_blank" class="btn btn-primary">
+          Solicitar Acuerdo OEM
+        </a>
+      </div>
+    </div>
+
+    <!-- FOOTER / CTA -->
+    <footer>
+      <p style="font-size: 1.1rem; color: #FFFFFF; font-weight: 700; margin-bottom: 8px;">
+        OmniBridge POS™ — Desarrollado por Darwin Padrino
+      </p>
+      <p style="margin-bottom: 16px;">
+        WhatsApp: <strong>+58 412-6165227</strong> • Correo: <strong>drinowar@gmail.com</strong>
+      </p>
+      <p>
+        Repositorio DEMO Público: 
+        <a href="https://github.com/dpadrino/omnibridge-pos-demo" target="_blank" style="color: #38BDF8; text-decoration: underline;">
+          github.com/dpadrino/omnibridge-pos-demo
+        </a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    function simulateSilentPrint() {
+      const receipt = document.getElementById('demoReceipt');
+      receipt.classList.remove('printed');
+      void receipt.offsetWidth;
+      receipt.classList.add('printed');
+    }
+
+    function changeWeight(val) {
+      document.getElementById('weightVal').innerHTML = val.toFixed(3) + ' <span class="weight-unit">KG</span>';
+    }
+
+    function triggerDrawer() {
+      const icon = document.getElementById('drawerIcon');
+      const status = document.getElementById('drawerStatus');
+      icon.innerText = '🔓';
+      icon.style.transform = 'scale(1.25)';
+      status.innerText = '¡Gaveta Abierta! (Pulso RJ11 Pin 2/5)';
+      status.style.color = '#34D399';
+
+      setTimeout(() => {
+        icon.innerText = '🔒';
+        icon.style.transform = 'scale(1)';
+        status.innerText = 'Gaveta Cerrada';
+        status.style.color = '#94A3B8';
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
