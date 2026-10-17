@@ -6,9 +6,13 @@
 [![Lenguaje](https://img.shields.io/badge/Lenguaje-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Plataformas](https://img.shields.io/badge/Plataformas-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
 [![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.1.8_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Video Demo](https://img.shields.io/badge/Video_Demo-Ver_en_1_minuto-red.svg)](docs/OmniBridge_POS_Promo_Video.mp4)
+[![Guía Visual](https://img.shields.io/badge/Gu%C3%ADa_Visual-Simulador_Web-blueviolet.svg)](docs/GUIA_VISUAL_COMERCIAL.html)
 [![Licencia](https://img.shields.io/badge/Licencia-Comercial_%2F_Propietaria-red.svg)](LICENSE.txt)
 
 ![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
+
+> 🎬 **[Ver Video Demostrativo con Locución (1:06 min)](docs/OmniBridge_POS_Promo_Video.mp4)** &nbsp;|&nbsp; 🌐 **[Abrir Guía Visual Interactiva & Simulador de Hardware](docs/GUIA_VISUAL_COMERCIAL.html)** &nbsp;|&nbsp; 📄 **[Descargar Folleto Comercial (PDF)](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)**
 
 ---
 
@@ -23,7 +27,19 @@ Los navegadores web modernos imponen estrictas políticas de sandbox que bloquea
 
 ---
 
-## 2. ⚡ Descarga Rápida de la Versión DEMO
+## 2. 🎬 Video Demostrativo y Guía Visual Interactiva
+
+Para conocer el producto en acción y experimentar el flujo de hardware antes de instalarlo en tu estación:
+
+| Recurso Multimedia | Descripción | Acceso Directo |
+| :--- | :--- | :--- |
+| 🎬 **Video Comercial con Locución** | Video Full HD de 1 minuto explicando el problema de la ventana emergente de Chrome y cómo OmniBridge POS lo resuelve al instante con voz profesional. | ▶️ [**Reproducir Video MP4**](docs/OmniBridge_POS_Promo_Video.mp4) |
+| 🌐 **Guía Visual & Simulador Web** | Demostración interactiva en HTML5: prueba la impresión térmica en vivo, simula lecturas de balanza digital y apertura de gaveta en tu navegador sin instalar nada. | 🚀 [**Abrir Guía Interactiva**](docs/GUIA_VISUAL_COMERCIAL.html) *(o haz doble clic en `docs/GUIA_VISUAL_COMERCIAL.html`)* |
+| 📄 **Folleto Comercial Oficial (PDF)** | Documento formal de 2 páginas con ficha técnica, arquitectura REST, tabla de endpoints y comparativa. | 📥 [**Descargar Folleto PDF**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf) |
+
+---
+
+## 3. ⚡ Descarga Rápida de la Versión DEMO
 
 Puedes descargar el instalador y paquete de evaluación directamente desde la sección de Releases:
 
@@ -41,7 +57,7 @@ Puedes descargar el instalador y paquete de evaluación directamente desde la se
 
 ---
 
-## 3. Integración en 3 Líneas de Código (JavaScript)
+## 4. Integración en 3 Líneas de Código (JavaScript)
 
 ```javascript
 // 1. Leer el peso en tiempo real de la balanza:
@@ -60,7 +76,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 4. Endpoints Principales de la API (Puerto Unificado 8989)
+## 5. Endpoints Principales de la API (Puerto Unificado 8989)
 
 | Método | Endpoint | Alias | Descripción | Formato |
 | :--- | :--- | :--- | :--- | :--- |
@@ -79,7 +95,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 5. Planes Comerciales y Precios
+## 6. Planes Comerciales y Precios
 
 Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación mediante licencias criptográficas **Ed25519** (activación offline sin internet):
 
@@ -91,14 +107,14 @@ Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación
 
 ---
 
-## 6. Folletos Comerciales Oficiales (PDF)
+## 7. Folletos Comerciales Oficiales (PDF)
 
 * 🇪🇸 [**Descargar Folleto Comercial (Español PDF)**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)
 * 🇺🇸 [**Descargar Folleto Comercial (English PDF)**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)
 
 ---
 
-## 7. Contacto Comercial y Soporte
+## 8. Contacto Comercial y Soporte
 
 Para consultas comerciales, compra de licencias o integración técnica:
 

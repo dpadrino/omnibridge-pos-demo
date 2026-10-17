@@ -6,9 +6,13 @@
 [![Language](https://img.shields.io/badge/Language-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/Platforms-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
 [![Release](https://img.shields.io/badge/Release-v1.1.8_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Video Demo](https://img.shields.io/badge/Video_Demo-Watch_Promo-red.svg)](docs/OmniBridge_POS_Promo_Video.mp4)
+[![Interactive Guide](https://img.shields.io/badge/Visual_Guide-Open_Showcase-blueviolet.svg)](docs/GUIA_VISUAL_COMERCIAL.html)
 [![License](https://img.shields.io/badge/License-Commercial_%2F_Proprietary-red.svg)](LICENSE.txt)
 
 ![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
+
+> 🎬 **[Watch 1-Minute Video Demo with Audio (1:06 min)](docs/OmniBridge_POS_Promo_Video.mp4)** &nbsp;|&nbsp; 🌐 **[Open Interactive Visual Guide & Hardware Playground](docs/GUIA_VISUAL_COMERCIAL.html)** &nbsp;|&nbsp; 📄 **[Download Commercial Brochure (PDF)](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)**
 
 ---
 
@@ -23,7 +27,19 @@ Modern web browsers enforce strict security sandbox policies that prevent direct
 
 ---
 
-## 2. ⚡ Quick Download & Evaluation DEMO
+## 2. 🎬 Video Demo & Interactive Visual Guide
+
+Experience the product in action and explore the hardware workflow before deploying it to your checkout stations:
+
+| Resource | Description | Direct Access |
+| :--- | :--- | :--- |
+| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough explaining the browser popup issue and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch MP4 Video**](docs/OmniBridge_POS_Promo_Video.mp4) |
+| 🌐 **Interactive Visual Showcase** | Interactive HTML5 playground: simulate silent thermal printing, live scale readings, and cash drawer kick directly in your browser. | 🚀 [**Open Interactive Guide**](docs/GUIA_VISUAL_COMERCIAL.html) *(or double-click `docs/GUIA_VISUAL_COMERCIAL.html`)* |
+| 📄 **Commercial Brochure (PDF)** | Comprehensive 2-page executive summary with technical specs, REST architecture, and pricing. | 📥 [**Download PDF Brochure**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf) |
+
+---
+
+## 3. ⚡ Quick Download & Evaluation DEMO
 
 You can download the pre-compiled evaluation package directly from the GitHub Releases page:
 
@@ -41,7 +57,7 @@ You can download the pre-compiled evaluation package directly from the GitHub Re
 
 ---
 
-## 3. Integration in 3 Lines of Code (JavaScript)
+## 4. Integration in 3 Lines of Code (JavaScript)
 
 ```javascript
 // 1. Read weight in real-time from the serial scale:
@@ -60,7 +76,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 4. Core API Endpoints (Unified Port 8989)
+## 5. Core API Endpoints (Unified Port 8989)
 
 | Method | Endpoint | Description | Payload Format |
 | :--- | :--- | :--- | :--- |
@@ -79,7 +95,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 5. Commercial Licensing & Pricing
+## 6. Commercial Licensing & Pricing
 
 When you are ready to remove evaluation quotas and watermarks, upgrade to a commercial license verified offline via **Ed25519 digital signatures**:
 
@@ -91,14 +107,14 @@ When you are ready to remove evaluation quotas and watermarks, upgrade to a comm
 
 ---
 
-## 6. Official Commercial Brochures (PDF)
+## 7. Official Commercial Brochures (PDF)
 
 * 🇪🇸 [**Download Official Brochure (Español PDF)**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)
 * 🇺🇸 [**Download Official Brochure (English PDF)**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)
 
 ---
 
-## 7. Developer & Sales Contact
+## 8. Developer & Sales Contact
 
 For commercial inquiries, license purchases, or custom driver support:
 
