@@ -5,7 +5,7 @@
 
 [![Lenguaje](https://img.shields.io/badge/Lenguaje-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Plataformas](https://img.shields.io/badge/Plataformas-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.0.0_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.1.8_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Licencia](https://img.shields.io/badge/Licencia-Comercial_%2F_Propietaria-red.svg)](LICENSE.txt)
 
 ![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
@@ -15,7 +15,7 @@
 ## 1. ¿Qué es OmniBridge POS™?
 
 Los navegadores web modernos imponen estrictas políticas de sandbox que bloquean el acceso directo a periféricos de caja física. Como resultado:
-* Al imprimir un ticket térmico se abre la ventana emergente de Chrome (`Ctrl+P`), ralentizando el cobro.
+* Al imprimir un ticket térmico se abre la ventana emergente del navegador (`Ctrl+P`), ralentizando el cobro.
 * Las aplicaciones web no pueden comunicarse directamente con balanzas electrónicas por puerto serial COM (RS232/USB).
 * La gaveta de dinero no se puede disparar de forma automática sin fricciones de drivers.
 
@@ -27,14 +27,17 @@ Los navegadores web modernos imponen estrictas políticas de sandbox que bloquea
 
 Puedes descargar el instalador y paquete de evaluación directamente desde la sección de Releases:
 
-👉 **[Descargar Paquete DEMO Oficial (v1.0.0)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
+👉 **[Descargar Paquete DEMO Oficial (v1.1.8)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
 
 ### El Modo de Evaluación Gratuito incluye:
-* Acceso completo a todos los endpoints en el puerto unificado `8989`.
-* Panel web visual interactivo en `http://127.0.0.1:8989/`.
-* Lectura serial de balanzas (con hardware físico o en modo simulación).
-* Impresión térmica de tickets (hasta 25 impresiones al día con marca de agua).
-* Auto-recuperación y saneamiento de colas atascadas en el Spooler de Windows.
+* **Acceso completo a todos los endpoints** en el puerto unificado `8989`.
+* **Panel web visual interactivo y Asistente de Configuración** en `http://127.0.0.1:8989/`:
+  - Detección automática en vivo de puertos seriales y lista de impresoras instaladas en el SO.
+  - Asignación gráfica de variables y periféricos sin editar archivos de texto manualmente.
+  - **Módulo de Licencia en Vivo:** Indicador de vigencia de uso y cargador de licencias en 1-clic (archivo `.key` o pegado de texto) con validación criptográfica Ed25519.
+* **Lectura serial de balanzas:** Conexión a hardware físico o modo simulación para desarrollo.
+* **Impresión térmica de tickets y etiquetas:** Evaluación con **marca de agua** (`*** MODO DEMO - OMNIBRIDGE POS ***`) y límite de cortesía de hasta 25 impresiones al día.
+* **Auto-recuperación y saneamiento:** Purga de colas atascadas en el Spooler de Windows.
 
 ---
 
@@ -61,12 +64,17 @@ await fetch('http://localhost:8989/ticket', {
 
 | Método | Endpoint | Alias | Descripción | Formato |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/` | - | Panel visual web interactivo de diagnóstico (suite 1-clic) | HTML Dashboard |
+| `GET` | `/` | - | Panel visual web interactivo y Asistente Gráfico de Configuración | HTML Dashboard |
 | `GET` | `/peso` | `/weight` | Lectura en tiempo real de la balanza serial (RS232 / USB) | JSON `{"peso": 1.25, "unit": "kg"}` |
 | `POST`| `/ticket` | `/impresora/ticket` | Impresión inteligente de tickets (térmicas ESC/POS) | JSON, Multipart PDF o RAW |
 | `POST`| `/drawer` | `/gaveta` | Disparo de pulso eléctrico para gaveta (RJ11 Pin 2 y 5) | POST vacío |
 | `POST`| `/print-label`| `/impresora/etiqueta` | Despacho RAW de etiquetas de códigos de barra (TSPL/ZPL) | JSON `{"commands": "..."}` |
-| `POST`| `/printers/cleanup` | `/impresoras/limpiar` | Auto-purga de trabajos atascados en el Spooler | POST vacío |
+| `POST`| `/print-matrix`| `/impresora/matriz` | Impresión en papel continuo / matricial (ESC/P) | JSON `{"text": "...", "form_feed": true}` |
+| `POST`| `/print/document`| `/impresora/documento`| Impresión en hojas de oficina Láser/A4 con escala `fit` | Multipart PDF o JSON URL |
+| `GET` | `/printers` | `/impresoras` | Catálogo de impresoras con clasificación heurística cuádruple | JSON Printers Catalog |
+| `POST`| `/printers/cleanup` | `/impresoras/limpiar`| Auto-purga de trabajos atascados en el Spooler | POST vacío |
+| `GET/POST`| `/api/v1/config` | `/config` | Consulta y guardado gráfico de variables del host en vivo | JSON Config Payload |
+| `GET/POST`| `/api/v1/license`| `/license` | Consulta de vigencia y activación en caliente de licencia | JSON License Status |
 | `GET` | `/health` | `/status` | Diagnóstico de salud: puertos, spooler y licencias | JSON Health Status |
 
 ---
@@ -77,7 +85,7 @@ Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación
 
 | Plan | Cliente Objetivo | Precio Sugerido | Lo que incluye |
 | :--- | :--- | :--- | :--- |
-| **Plan Estación / Caja** | Supermercados, panaderías, tiendas | **$35 – $50 USD** / año por caja (o $90 perpetuo) | Instalador 1-clic como Servicio Windows, lecturas de báscula e impresiones ilimitadas, cero marcas de agua y panel local. |
+| **Plan Estación / Caja** | Supermercados, panaderías, tiendas | **$35 – $50 USD** / año por caja (o $90 perpetuo) | Instalador 1-clic como Servicio Windows, lecturas de báscula e impresiones ilimitadas, cero marcas de agua, asistente gráfico local y soporte. |
 | **Plan OEM / Marca Blanca** | Casas de software y creadores de ERPs | **$1,200 – $2,500 USD** (Pago único) | Distribución ilimitada bajo tu propia marca y logotipo, sin regalías por caja, colección Postman, especificación OpenAPI 3.0 y generador de licencias. |
 | **Consultoría & Adaptaciones** | Proyectos corporativos y cadenas | **Cotización según proyecto** | Homologación de balanzas industriales específicas, integración asistida con Odoo, WooCommerce, PHP o React, y soporte prioritario. |
 

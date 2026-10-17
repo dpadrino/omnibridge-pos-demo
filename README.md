@@ -5,7 +5,7 @@
 
 [![Language](https://img.shields.io/badge/Language-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/Platforms-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
-[![Release](https://img.shields.io/badge/Release-v1.0.0_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Release](https://img.shields.io/badge/Release-v1.1.8_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![License](https://img.shields.io/badge/License-Commercial_%2F_Proprietary-red.svg)](LICENSE.txt)
 
 ![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
@@ -27,14 +27,17 @@ Modern web browsers enforce strict security sandbox policies that prevent direct
 
 You can download the pre-compiled evaluation package directly from the GitHub Releases page:
 
-👉 **[Download Latest Evaluation DEMO (v1.0.0)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
+👉 **[Download Latest Evaluation DEMO (v1.1.8)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
 
 ### Free Evaluation Mode Includes:
-* Full access to all REST endpoints on port `8989`.
-* Visual Web Diagnostic Dashboard at `http://127.0.0.1:8989/`.
-* Serial scale reading (real hardware or simulated mode).
-* Silent thermal printing (up to 25 receipts/day with demo watermark).
-* Automatic Windows Spooler queue healing.
+* **Full access to all REST endpoints** on port `8989`.
+* **Visual Web Dashboard & Host Setup Wizard** at `http://127.0.0.1:8989/`:
+  - Live auto-discovery of COM/serial ports and system printers.
+  - Interactive peripheral assignment and host configuration without touching TOML files manually.
+  - **In-App License Manager:** Live validity indicator and 1-click license activator (`.key` file or text paste) with Ed25519 cryptographic validation.
+* **Serial scale reading:** Direct real hardware connection or simulation mode for offline dev.
+* **Silent thermal printing:** Receipts, labels, and matrices with **DEMO watermark** (`*** MODO DEMO - OMNIBRIDGE POS ***`) and courtesy daily quota.
+* **Automatic Windows Spooler queue healing:** Recovers stuck jobs seamlessly.
 
 ---
 
@@ -61,12 +64,17 @@ await fetch('http://localhost:8989/ticket', {
 
 | Method | Endpoint | Description | Payload Format |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/` | Visual Diagnostic Web Dashboard (1-click test suite) | HTML |
+| `GET` | `/` | Visual Diagnostic Web Dashboard & Setup Wizard | HTML |
 | `GET` | `/peso`, `/weight` | Real-time weight from RS232 / USB serial scale | JSON `{"peso": 1.25, "unit": "kg"}` |
 | `POST`| `/ticket` | Intelligent silent thermal receipt printing | JSON, Multipart PDF, or RAW |
 | `POST`| `/drawer`, `/gaveta` | Trigger physical cash drawer pulse (RJ11 Pin 2 & 5) | Empty POST |
 | `POST`| `/print-label` | Direct RAW barcode label dispatch (TSPL / ZPL) | JSON `{"commands": "..."}` |
+| `POST`| `/print-matrix`| Continuous feed / dot-matrix text printing (ESC/P) | JSON `{"text": "...", "form_feed": true}` |
+| `POST`| `/print/document`| Full-page Office Laser / A4 document printing (`fit`) | Multipart PDF or JSON URL |
+| `GET` | `/printers` | Hardware catalog with 4-way classification heuristics | JSON Printers Catalog |
 | `POST`| `/printers/cleanup` | Auto-purge and recover jammed Windows Print Spooler queues | Empty POST |
+| `GET/POST`| `/api/v1/config` | Query and live-save host variables atomically | JSON Config Payload |
+| `GET/POST`| `/api/v1/license`| Query validity status and hot-activate license key | JSON License Status |
 | `GET` | `/health`, `/status` | Complete health check across ports, spooler, and license | JSON Health Status |
 
 ---
@@ -77,7 +85,7 @@ When you are ready to remove evaluation quotas and watermarks, upgrade to a comm
 
 | Plan | Target Audience | Pricing | What's Included |
 | :--- | :--- | :--- | :--- |
-| **Station / POS License** | Retail stores, supermarkets, pharmacies | **$35 – $50 USD** / yr per POS (or $90 lifetime) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and dashboard access. |
+| **Station / POS License** | Retail stores, supermarkets, pharmacies | **$35 – $50 USD** / yr per POS (or $90 lifetime) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and live host configuration wizard. |
 | **OEM / White-Label Partner** | Software houses, Cloud POS / ERP SaaS | **$1,200 – $2,500 USD** (One-time fee) | Unlimited distribution under your own brand name and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
 | **Custom Engineering** | Bespoke corporate integrations | **Project Quote** | Industrial scale protocols, custom drivers, and assisted integration with Odoo, WooCommerce, or custom backends. |
 

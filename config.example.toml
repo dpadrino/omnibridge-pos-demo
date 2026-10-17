@@ -77,8 +77,8 @@ default_document_printer = "auto"
 # extra_document_keywords = ["OFICINA", "GERENCIA", "ADMINISTRACION", "REPORTE", "COLOR"]
 
 # Ruta del ejecutable SumatraPDF en Windows para impresión silenciosa de PDFs
-# Si se omite o se usa "tools\\SumatraPDF.exe", el agente lo ubica automáticamente
-sumatra_path = "tools\\SumatraPDF.exe"
+# Ubicación predeterminada exacta en C:\PosAgent (o se auto-detecta si está en tools\ o installer\tools\)
+sumatra_path = "C:\\PosAgent\\installer\\tools\\SumatraPDF.exe"
 
 # Argumentos para SumatraPDF (modo silencioso, ajuste noscale)
 sumatra_args = "-print-to {printer} -print-settings noscale -silent {file}"
