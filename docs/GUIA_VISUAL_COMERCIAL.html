@@ -353,11 +353,14 @@
       </p>
 
       <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
-        <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" class="btn btn-primary" style="width: auto; padding: 14px 32px;">
-          📦 Descargar DEMO Gratuita (v1.1.8)
+        <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" class="btn btn-primary" style="width: auto; padding: 14px 28px;">
+          📦 Descargar DEMO (v1.1.8)
         </a>
-        <a href="https://wa.me/584126165227?text=Hola%20Darwin,%20vi%20la%20guia%20visual%20de%20OmniBridge%20POS%20y%20quiero%20cotizar" target="_blank" class="btn btn-accent" style="width: auto; padding: 14px 32px;">
-          💬 Contactar por WhatsApp (+58 412-6165227)
+        <a href="#installation-section" class="btn" style="width: auto; padding: 14px 28px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.18); color: #F1F5F9;">
+          🛠️ Guía de Instalación (Win / Linux / Mac)
+        </a>
+        <a href="https://wa.me/584126165227?text=Hola%20Darwin,%20vi%20la%20guia%20visual%20de%20OmniBridge%20POS%20y%20quiero%20cotizar" target="_blank" class="btn btn-accent" style="width: auto; padding: 14px 28px;">
+          💬 WhatsApp (+58 412-6165227)
         </a>
       </div>
     </header>
@@ -552,6 +555,110 @@
 });</code></pre>
     </div>
 
+    <!-- SECTION: OS INSTALLATION INSTRUCTIONS -->
+    <div id="installation-section" class="section-title">Instalación y Despliegue por Sistema Operativo</div>
+    <div class="card" style="margin-bottom: 60px;">
+      <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 1.05rem;">
+        OmniBridge POS se distribuye precompilado como un único binario nativo ultra-liviano (< 5 MB RAM) con scripts automatizados. Selecciona tu sistema operativo para ver el paso a paso:
+      </p>
+
+      <!-- OS Tabs Buttons -->
+      <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+        <button id="tabBtnWin" class="btn" onclick="selectOsTab('win')" style="width: auto; padding: 10px 24px; background: #2563EB; color: #FFFFFF; font-weight: 700; border: none; border-radius: 10px; cursor: pointer;">
+          🪟 Windows (10 / 11 / Server)
+        </button>
+        <button id="tabBtnLinux" class="btn" onclick="selectOsTab('linux')" style="width: auto; padding: 10px 24px; background: rgba(255,255,255,0.06); color: #94A3B8; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer;">
+          🐧 Linux (Ubuntu / Debian / CentOS)
+        </button>
+        <button id="tabBtnMac" class="btn" onclick="selectOsTab('mac')" style="width: auto; padding: 10px 24px; background: rgba(255,255,255,0.06); color: #94A3B8; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; cursor: pointer;">
+          🍎 macOS (Apple Silicon & Intel)
+        </button>
+      </div>
+
+      <!-- Windows Tab Content -->
+      <div id="tabContentWin" style="display: block;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <h4 style="color: #60A5FA; font-size: 1.2rem;">Instalación en Windows (Servicio Permanente en Segundo Plano)</h4>
+          <span style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.2); color: #93C5FD; padding: 4px 10px; border-radius: 6px;">Paquete: omnibridge-pos-windows-x86_64.zip</span>
+        </div>
+        <ol style="margin-left: 20px; color: #CBD5E1; font-size: 0.95rem; line-height: 1.8;">
+          <li>Descarga el paquete oficial <strong><code>omnibridge-pos-windows-x86_64.zip</code></strong> desde <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" style="color: #38BDF8;">GitHub Releases</a>.</li>
+          <li>Descomprime la carpeta completa directamente en <code>C:\PosAgent</code>.</li>
+          <li>Abre <strong>PowerShell como Administrador</strong> y ejecuta el script de instalación en 1 clic:
+            <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
+              cd C:\PosAgent<br>
+              powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_service.ps1
+            </div>
+          </li>
+          <li>¡Listo! El agente se instala como Servicio de Windows (arranque automático al encender el PC). Abre <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a> para asignar periféricos.</li>
+        </ol>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
+          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md#31-producci%C3%B3n-en-windows-pcs-facturadoras-de-tienda" target="_blank" style="font-size: 0.9rem; color: #38BDF8; text-decoration: underline; font-weight: 600;">
+            📘 Abrir Manual Técnico de Windows (NSSM, comandos manuales y spooler) &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Linux Tab Content -->
+      <div id="tabContentLinux" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <h4 style="color: #34D399; font-size: 1.2rem;">Instalación en Linux (Ubuntu, Debian, RHEL, Raspberry Pi)</h4>
+          <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.2); color: #6EE7B7; padding: 4px 10px; border-radius: 6px;">Paquete: omnibridge-pos-linux-x86_64.tar.gz</span>
+        </div>
+        <ol style="margin-left: 20px; color: #CBD5E1; font-size: 0.95rem; line-height: 1.8;">
+          <li>Descarga el paquete <strong><code>omnibridge-pos-linux-x86_64.tar.gz</code></strong> desde <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" style="color: #38BDF8;">GitHub Releases</a>.</li>
+          <li>Descomprime y otorga permisos de acceso al puerto serial COM/USB:
+            <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
+              tar -xzf omnibridge-pos-linux-x86_64.tar.gz<br>
+              cd omnibridge-pos-linux-x86_64<br>
+              sudo usermod -aG dialout $USER
+            </div>
+          </li>
+          <li>Ejecuta el script de inicio o regístralo como servicio <strong>systemd</strong>:
+            <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
+              ./scripts/run_macos_linux.sh
+            </div>
+          </li>
+          <li>Abre tu navegador en <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a> para verificar el estado de los periféricos.</li>
+        </ol>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
+          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md#32-producci%C3%B3n-en-linux-servidor-o-caja-con-systemd" target="_blank" style="font-size: 0.9rem; color: #34D399; text-decoration: underline; font-weight: 600;">
+            📘 Abrir Manual Técnico de Linux (Servicio systemd y permisos udev) &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- macOS Tab Content -->
+      <div id="tabContentMac" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <h4 style="color: #C084FC; font-size: 1.2rem;">Instalación en macOS (Apple Silicon M1/M2/M3/M4 & Intel)</h4>
+          <span style="font-size: 0.8rem; background: rgba(139, 92, 246, 0.2); color: #DDD6FE; padding: 4px 10px; border-radius: 6px;">Paquete: omnibridge-pos-macos-arm64.tar.gz</span>
+        </div>
+        <ol style="margin-left: 20px; color: #CBD5E1; font-size: 0.95rem; line-height: 1.8;">
+          <li>Descarga el paquete <strong><code>omnibridge-pos-macos-arm64.tar.gz</code></strong> desde <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" style="color: #38BDF8;">GitHub Releases</a>.</li>
+          <li>Descomprime y retira la marca de cuarentena de Apple Gatekeeper:
+            <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
+              tar -xzf omnibridge-pos-macos-arm64.tar.gz<br>
+              cd omnibridge-pos-macos-arm64<br>
+              xattr -cr .<br>
+              chmod +x pos-peripherals-agent scripts/run_macos_linux.sh
+            </div>
+          </li>
+          <li>Ejecuta el agente localmente:
+            <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
+              ./scripts/run_macos_linux.sh
+            </div>
+          </li>
+          <li>Abre tu navegador en <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a>.</li>
+        </ol>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
+          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md#22-en-macos-desarrollo-y-paquete-precompilado" target="_blank" style="font-size: 0.9rem; color: #C084FC; text-decoration: underline; font-weight: 600;">
+            📘 Abrir Manual Técnico de macOS (Launchd daemon y adaptadores USB) &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
     <!-- SECTION: COMMERCIAL PLANS -->
     <div class="section-title">Planes Comerciales y Precios Oficiales</div>
     <div class="plans-grid">
@@ -652,6 +759,25 @@
         status.innerText = 'Gaveta Cerrada';
         status.style.color = '#94A3B8';
       }, 2500);
+    }
+
+    function selectOsTab(os) {
+      const tabs = ['win', 'linux', 'mac'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        const content = document.getElementById('tabContent' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (t === os) {
+          btn.style.background = t === 'win' ? '#2563EB' : (t === 'linux' ? '#10B981' : '#8B5CF6');
+          btn.style.color = '#FFFFFF';
+          btn.style.border = 'none';
+          content.style.display = 'block';
+        } else {
+          btn.style.background = 'rgba(255,255,255,0.06)';
+          btn.style.color = '#94A3B8';
+          btn.style.border = '1px solid rgba(255,255,255,0.1)';
+          content.style.display = 'none';
+        }
+      });
     }
   </script>
 </body>

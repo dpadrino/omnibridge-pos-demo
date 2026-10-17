@@ -61,7 +61,22 @@ Puedes descargar el instalador y paquete de evaluación directamente desde la se
 
 ---
 
-## 4. Integración en 3 Líneas de Código (JavaScript)
+## 4. 🛠️ Instrucciones de Instalación por Sistema Operativo
+
+OmniBridge POS se distribuye como un único ejecutable nativo en **Rust** precompilado (< 5 MB) con scripts de automatización para cada plataforma:
+
+| Sistema Operativo | Paquete Descargable | Instalación Rápida | Guía Detallada |
+| :--- | :--- | :--- | :--- |
+| 🪟 **Windows 10 / 11 / Server** | `omnibridge-pos-windows-x86_64.zip` | Descomprimir en `C:\PosAgent` y ejecutar `powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_service.ps1` como Administrador. | 📘 [Manual de Despliegue Windows](docs/DEPLOYMENT_GUIDE.md#31-producci%C3%B3n-en-windows-pcs-facturadoras-de-tienda) |
+| 🐧 **Linux (Ubuntu / Debian / RHEL)** | `omnibridge-pos-linux-x86_64.tar.gz` | Descomprimir, agregar usuario a grupo serial (`sudo usermod -aG dialout $USER`) y correr `./scripts/run_macos_linux.sh` o registrar servicio `systemd`. | 📘 [Manual de Despliegue Linux](docs/DEPLOYMENT_GUIDE.md#32-producci%C3%B3n-en-linux-servidor-o-caja-con-systemd) |
+| 🍎 **macOS (Apple Silicon & Intel)** | `omnibridge-pos-macos-arm64.tar.gz` | Descomprimir, retirar Gatekeeper (`xattr -cr .`) y ejecutar `./scripts/run_macos_linux.sh` o registrar daemon `launchd`. | 📘 [Manual de Despliegue macOS](docs/DEPLOYMENT_GUIDE.md#22-en-macos-desarrollo-y-paquete-precompilado) |
+
+> 📖 **[Abrir la Guía Maestra de Despliegue e Instalación Técnica (DEPLOYMENT_GUIDE.md)](docs/DEPLOYMENT_GUIDE.md)**  
+> 🌐 **[Abrir la Guía Visual Interactiva en la Web](https://dpadrino.github.io/omnibridge-pos-demo/#installation-section)**
+
+---
+
+## 5. Integración en 3 Líneas de Código (JavaScript)
 
 ```javascript
 // 1. Leer el peso en tiempo real de la balanza:
@@ -80,7 +95,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 5. Endpoints Principales de la API (Puerto Unificado 8989)
+## 6. Endpoints Principales de la API (Puerto Unificado 8989)
 
 | Método | Endpoint | Alias | Descripción | Formato |
 | :--- | :--- | :--- | :--- | :--- |
@@ -99,7 +114,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 6. Planes Comerciales y Precios
+## 7. Planes Comerciales y Precios
 
 Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación mediante licencias criptográficas **Ed25519** (activación offline sin internet):
 
@@ -112,14 +127,14 @@ Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación
 
 ---
 
-## 7. Folletos Comerciales Oficiales (PDF)
+## 8. Folletos Comerciales Oficiales (PDF)
 
 * 🇪🇸 [**Descargar Folleto Comercial (Español PDF)**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)
 * 🇺🇸 [**Descargar Folleto Comercial (English PDF)**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)
 
 ---
 
-## 8. Contacto Comercial y Soporte
+## 9. Contacto Comercial y Soporte
 
 Para consultas comerciales, compra de licencias o integración técnica:
 

@@ -61,7 +61,22 @@ You can download the pre-compiled evaluation package directly from the GitHub Re
 
 ---
 
-## 4. Integration in 3 Lines of Code (JavaScript)
+## 4. 🛠️ Installation Instructions by Operating System
+
+OmniBridge POS is distributed as a single native pre-compiled **Rust** executable (< 5 MB) with automated scripts for every platform:
+
+| Operating System | Download Package | Quick Installation | Detailed Guide |
+| :--- | :--- | :--- | :--- |
+| 🪟 **Windows 10 / 11 / Server** | `omnibridge-pos-windows-x86_64.zip` | Extract to `C:\PosAgent` and run `powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_service.ps1` as Administrator. | 📘 [Windows Deployment Guide](docs/DEPLOYMENT_GUIDE.md#31-producci%C3%B3n-en-windows-pcs-facturadoras-de-tienda) |
+| 🐧 **Linux (Ubuntu / Debian / RHEL)** | `omnibridge-pos-linux-x86_64.tar.gz` | Extract, grant serial port permissions (`sudo usermod -aG dialout $USER`), and run `./scripts/run_macos_linux.sh` or register `systemd` service. | 📘 [Linux Deployment Guide](docs/DEPLOYMENT_GUIDE.md#32-producci%C3%B3n-en-linux-servidor-o-caja-con-systemd) |
+| 🍎 **macOS (Apple Silicon & Intel)** | `omnibridge-pos-macos-arm64.tar.gz` | Extract, clear Gatekeeper (`xattr -cr .`), and run `./scripts/run_macos_linux.sh` or register `launchd` daemon. | 📘 [macOS Deployment Guide](docs/DEPLOYMENT_GUIDE.md#22-en-macos-desarrollo-y-paquete-precompilado) |
+
+> 📖 **[Open Master Deployment & Technical Installation Guide (DEPLOYMENT_GUIDE.md)](docs/DEPLOYMENT_GUIDE.md)**  
+> 🌐 **[Open Interactive Visual Showcase on the Web](https://dpadrino.github.io/omnibridge-pos-demo/#installation-section)**
+
+---
+
+## 5. Integration in 3 Lines of Code (JavaScript)
 
 ```javascript
 // 1. Read weight in real-time from the serial scale:
@@ -80,7 +95,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 5. Core API Endpoints (Unified Port 8989)
+## 6. Core API Endpoints (Unified Port 8989)
 
 | Method | Endpoint | Description | Payload Format |
 | :--- | :--- | :--- | :--- |
@@ -99,7 +114,7 @@ await fetch('http://localhost:8989/ticket', {
 
 ---
 
-## 6. Commercial Licensing & Pricing
+## 7. Commercial Licensing & Pricing
 
 When you are ready to remove evaluation quotas and watermarks, upgrade to a commercial license verified offline via **Ed25519 digital signatures**:
 
@@ -112,14 +127,14 @@ When you are ready to remove evaluation quotas and watermarks, upgrade to a comm
 
 ---
 
-## 7. Official Commercial Brochures (PDF)
+## 8. Official Commercial Brochures (PDF)
 
 * 🇪🇸 [**Download Official Brochure (Español PDF)**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)
 * 🇺🇸 [**Download Official Brochure (English PDF)**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)
 
 ---
 
-## 8. Developer & Sales Contact
+## 9. Developer & Sales Contact
 
 For commercial inquiries, license purchases, or custom driver support:
 
