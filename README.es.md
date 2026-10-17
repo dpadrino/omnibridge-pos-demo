@@ -85,8 +85,8 @@ Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación
 
 | Plan | Cliente Objetivo | Precio Sugerido | Lo que incluye |
 | :--- | :--- | :--- | :--- |
-| **Plan Estación / Caja** | Supermercados, panaderías, tiendas | **$35 – $50 USD** / año por caja (o $90 perpetuo) | Instalador 1-clic como Servicio Windows, lecturas de báscula e impresiones ilimitadas, cero marcas de agua, asistente gráfico local y soporte. |
-| **Plan OEM / Marca Blanca** | Casas de software y creadores de ERPs | **$1,200 – $2,500 USD** (Pago único) | Distribución ilimitada bajo tu propia marca y logotipo, sin regalías por caja, colección Postman, especificación OpenAPI 3.0 y generador de licencias. |
+| **Plan Estación / Caja** | Supermercados, panaderías, tiendas | **$35 USD** / año por caja (o **$90 indefinida / perpetua**) | Instalador 1-clic como Servicio Windows, lecturas de báscula e impresiones ilimitadas, cero marcas de agua, asistente gráfico local y soporte. |
+| **Plan OEM / Marca Blanca** | Casas de software y creadores de ERPs | **$1,490 USD** (Pago único) | Distribución ilimitada bajo tu propia marca y logotipo, sin regalías por caja, colección Postman, especificación OpenAPI 3.0 y generador de licencias. |
 | **Consultoría & Adaptaciones** | Proyectos corporativos y cadenas | **Cotización según proyecto** | Homologación de balanzas industriales específicas, integración asistida con Odoo, WooCommerce, PHP o React, y soporte prioritario. |
 
 ---

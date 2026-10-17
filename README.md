@@ -85,8 +85,8 @@ When you are ready to remove evaluation quotas and watermarks, upgrade to a comm
 
 | Plan | Target Audience | Pricing | What's Included |
 | :--- | :--- | :--- | :--- |
-| **Station / POS License** | Retail stores, supermarkets, pharmacies | **$35 – $50 USD** / yr per POS (or $90 lifetime) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and live host configuration wizard. |
-| **OEM / White-Label Partner** | Software houses, Cloud POS / ERP SaaS | **$1,200 – $2,500 USD** (One-time fee) | Unlimited distribution under your own brand name and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
+| **Station / POS License** | Retail stores, supermarkets, pharmacies | **$35 USD** / yr per POS (or **$90 lifetime**) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and live host configuration wizard. |
+| **OEM / White-Label Partner** | Software houses, Cloud POS / ERP SaaS | **$1,490 USD** (One-time fee) | Unlimited distribution under your own brand name and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
 | **Custom Engineering** | Bespoke corporate integrations | **Project Quote** | Industrial scale protocols, custom drivers, and assisted integration with Odoo, WooCommerce, or custom backends. |
 
 ---
