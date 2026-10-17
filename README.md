@@ -10,9 +10,13 @@
 [![Video Demo](https://img.shields.io/badge/Video_Demo-Watch_Promo-red.svg)](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)
 [![License](https://img.shields.io/badge/License-Commercial_%2F_Proprietary-red.svg)](LICENSE.txt)
 
-![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
+[![OmniBridge POS — Click to Open Live Showcase & Video](docs/upwork_portfolio_thumbnail.png)](https://dpadrino.github.io/omnibridge-pos-demo/)
 
-> 🌐 **[Open Interactive Live Showcase & Playground](https://dpadrino.github.io/omnibridge-pos-demo/)** &nbsp;|&nbsp; 🎬 **[Watch 1-Minute Video Demo with Audio](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)** &nbsp;|&nbsp; 📄 **[Download Commercial Brochure (PDF)](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)**
+> ### 🌐 [TEST INTERACTIVE DEMO & WATCH VIDEO ONLINE (CLICK HERE)](https://dpadrino.github.io/omnibridge-pos-demo/)
+> 💡 **Navigation Notice:** When browsing repository files inside GitHub, `.html` files are displayed as raw source code due to platform security policies. To explore the **Silent Thermal Printer Simulator**, the **Digital Weighing Scale**, and watch the **Voiceover Video Demo**, visit the live hosted web page directly:  
+> 👉 **[https://dpadrino.github.io/omnibridge-pos-demo/](https://dpadrino.github.io/omnibridge-pos-demo/)**
+> 
+> 📄 **[Download Official Commercial Brochure (PDF)](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)**
 
 ---
 
@@ -34,7 +38,7 @@ Experience the product in action and explore the hardware workflow before deploy
 | Resource | Description | Direct Access |
 | :--- | :--- | :--- |
 | 🌐 **Interactive Visual Showcase** | Interactive HTML5 playground: simulate silent thermal printing, live scale readings, and cash drawer kick directly in your browser without installing anything. | 🚀 [**Launch Live Showcase (GitHub Pages)**](https://dpadrino.github.io/omnibridge-pos-demo/) |
-| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough with human voiceover explaining the browser popup problem and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch Video Online**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) *(or download [MP4](docs/OmniBridge_POS_Promo_Video.mp4))* |
+| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough with human voiceover explaining the browser popup problem and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch Video Online**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) <br> 📥 [Download Direct MP4 (1.8 MB)](https://github.com/dpadrino/omnibridge-pos-demo/releases/download/v1.1.8/OmniBridge_POS_Promo_Video.mp4) |
 | 📄 **Commercial Brochure (PDF)** | Comprehensive 2-page executive summary with technical specs, REST architecture, and pricing. | 📥 [**Download PDF Brochure**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf) |
 
 ---
@@ -99,11 +103,12 @@ await fetch('http://localhost:8989/ticket', {
 
 When you are ready to remove evaluation quotas and watermarks, upgrade to a commercial license verified offline via **Ed25519 digital signatures**:
 
-| Plan | Target Audience | Pricing | What's Included |
-| :--- | :--- | :--- | :--- |
-| **Station / POS License** | Retail stores, supermarkets, pharmacies | **$35 USD** / yr per POS (or **$90 lifetime**) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and live host configuration wizard. |
-| **OEM / White-Label Partner** | Software houses, Cloud POS / ERP SaaS | **$390 USD** (One-time fee) | Unlimited distribution under your own brand name and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
-| **Custom Engineering** | Bespoke corporate integrations | **Project Quote** | Industrial scale protocols, custom drivers, and assisted integration with Odoo, WooCommerce, or custom backends. |
+| Plan | Target Audience | Pricing | Direct WhatsApp Purchase | What's Included |
+| :--- | :--- | :--- | :--- | :--- |
+| **Station Annual** | Retail stores, supermarkets, pharmacies | **$35 USD** / yr | [🛒 Buy ($35)](https://wa.me/584126165227?text=Hello%20Darwin,%20I%20want%20to%20buy%20the%20Annual%20Station%20License%20($35%20USD)) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and live host configuration wizard. |
+| **Station Lifetime** | Fixed single checkout stations | **$90 USD** (One-time fee) | [🛒 Buy ($90)](https://wa.me/584126165227?text=Hello%20Darwin,%20I%20want%20to%20buy%20the%20Lifetime%20Station%20License%20($90%20USD)) | Lifetime perpetual license, Ed25519 offline digital signature, spooler auto-purge, and maintenance updates. |
+| **OEM / White-Label** | Software houses, Cloud POS / ERP SaaS | **$390 USD** (One-time fee) | [🛒 Buy OEM ($390)](https://wa.me/584126165227?text=Hello%20Darwin,%20I%20want%20to%20buy%20the%20OEM%20White-Label%20License%20($390%20USD)) | Unlimited distribution under your brand and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
+| **Custom Engineering** | Bespoke corporate integrations | **Project Quote** | [💬 Request Quote](https://wa.me/584126165227?text=Hello%20Darwin,%20I%20want%20a%20custom%20engineering%20quote%20for%20OmniBridge%20POS) | Industrial scale protocols, custom drivers, and assisted integration with Odoo, WooCommerce, or custom backends. |
 
 ---
 

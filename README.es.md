@@ -6,13 +6,17 @@
 [![Lenguaje](https://img.shields.io/badge/Lenguaje-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Plataformas](https://img.shields.io/badge/Plataformas-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
 [![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.1.8_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
-[![Guía Visual](https://img.shields.io/badge/Gu%C3%ADa_Visual-Abrir_Simulador_Online-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
-[![Video Demo](https://img.shields.io/badge/Video_Demo-Ver_en_1_minuto-red.svg)](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)
+[![Simulador Online](https://img.shields.io/badge/Simulador_Web-Abrir_en_Vivo-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
+[![Video Demo](https://img.shields.io/badge/Video_Demo-Ver_en_la_Web-red.svg)](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)
 [![Licencia](https://img.shields.io/badge/Licencia-Comercial_%2F_Propietaria-red.svg)](LICENSE.txt)
 
-![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
+[![OmniBridge POS — Clic para abrir el Simulador y Video en Vivo](docs/upwork_portfolio_thumbnail.png)](https://dpadrino.github.io/omnibridge-pos-demo/)
 
-> 🌐 **[Abrir Guía Visual Interactiva & Simulador de Hardware Online](https://dpadrino.github.io/omnibridge-pos-demo/)** &nbsp;|&nbsp; 🎬 **[Ver Video Comercial con Locución](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)** &nbsp;|&nbsp; 📄 **[Descargar Folleto Comercial (PDF)](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)**
+> ### 🌐 [PROBAR DEMO INTERACTIVA & VER VIDEO EN VIVO (CLIC AQUÍ)](https://dpadrino.github.io/omnibridge-pos-demo/)
+> 💡 **Nota importante de navegación:** Al explorar los archivos dentro de GitHub, los archivos `.html` se muestran por defecto como código fuente por restricciones de seguridad de la plataforma. Para probar el **Simulador de Impresión Silenciosa**, la **Balanza Digital** y reproducir el **Video Comercial con Audio**, ingresa directamente a:  
+> 👉 **[https://dpadrino.github.io/omnibridge-pos-demo/](https://dpadrino.github.io/omnibridge-pos-demo/)**
+> 
+> 📄 **[Descargar Folleto Comercial Oficial (PDF)](docs/OmniBridge_POS_Brochure_Comercial.es.pdf)**
 
 ---
 
@@ -34,7 +38,7 @@ Para conocer el producto en acción y experimentar el flujo de hardware antes de
 | Recurso Multimedia | Descripción | Acceso Directo |
 | :--- | :--- | :--- |
 | 🌐 **Guía Visual & Simulador Web** | Demostración interactiva en HTML5: prueba la impresión térmica en vivo, simula lecturas de balanza digital y apertura de gaveta en tu navegador sin instalar nada. | 🚀 [**Abrir Simulador Online (GitHub Pages)**](https://dpadrino.github.io/omnibridge-pos-demo/) |
-| 🎬 **Video Comercial con Locución** | Video Full HD de 1 minuto explicando el problema de la ventana emergente de Chrome y cómo OmniBridge POS lo resuelve al instante con voz profesional y música de fondo. | ▶️ [**Reproducir Video Online**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) *(o descargar [MP4](docs/OmniBridge_POS_Promo_Video.mp4))* |
+| 🎬 **Video Comercial con Locución** | Video Full HD de 1 minuto explicando el problema de la ventana emergente de Chrome y cómo OmniBridge POS lo resuelve al instante con voz profesional y música de fondo. | ▶️ [**Reproducir Video en la Web**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) <br> 📥 [Descargar MP4 Directo (1.8 MB)](https://github.com/dpadrino/omnibridge-pos-demo/releases/download/v1.1.8/OmniBridge_POS_Promo_Video.mp4) |
 | 📄 **Folleto Comercial Oficial (PDF)** | Documento formal de 2 páginas con ficha técnica, arquitectura REST, tabla de endpoints y comparativa. | 📥 [**Descargar Folleto PDF**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf) |
 
 ---
@@ -99,11 +103,12 @@ await fetch('http://localhost:8989/ticket', {
 
 Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación mediante licencias criptográficas **Ed25519** (activación offline sin internet):
 
-| Plan | Cliente Objetivo | Precio Sugerido | Lo que incluye |
-| :--- | :--- | :--- | :--- |
-| **Plan Estación / Caja** | Supermercados, panaderías, tiendas | **$35 USD** / año por caja (o **$90 indefinida / perpetua**) | Instalador 1-clic como Servicio Windows, lecturas de báscula e impresiones ilimitadas, cero marcas de agua, asistente gráfico local y soporte. |
-| **Plan OEM / Marca Blanca** | Casas de software y creadores de ERPs | **$390 USD** (Pago único) | Distribución ilimitada bajo tu propia marca y logotipo, sin regalías por caja, colección Postman, especificación OpenAPI 3.0 y generador de licencias. |
-| **Consultoría & Adaptaciones** | Proyectos corporativos y cadenas | **Cotización según proyecto** | Homologación de balanzas industriales específicas, integración asistida con Odoo, WooCommerce, PHP o React, y soporte prioritario. |
+| Plan | Cliente Objetivo | Precio Oficial | Enlace Directo WhatsApp | Lo que incluye |
+| :--- | :--- | :--- | :--- | :--- |
+| **Estación Anual** | Retail, minimarkets, farmacias | **$35 USD** / año por caja | [🛒 Comprar ($35)](https://wa.me/584126165227?text=Hola%20Darwin,%20quiero%20comprar%20la%20Licencia%20Estacion%20Anual%20($35%20USD)) | Instalador 1-clic como Servicio Windows, lecturas de báscula e impresiones ilimitadas, cero marcas de agua, asistente gráfico local y soporte. |
+| **Estación Indefinida** | Comercios con caja fija única | **$90 USD** (Pago único) | [🛒 Comprar ($90)](https://wa.me/584126165227?text=Hola%20Darwin,%20quiero%20comprar%20la%20Licencia%20Estacion%20Indefinida%20($90%20USD)) | Licencia vitalicia perpetua, firma digital Ed25519 offline, auto-purga de colas de impresión y actualizaciones de mantenimiento. |
+| **OEM / Marca Blanca** | Casas de software y creadores ERP/POS | **$390 USD** (Pago único) | [🛒 Comprar OEM ($390)](https://wa.me/584126165227?text=Hola%20Darwin,%20quiero%20comprar%20la%20Licencia%20OEM%20Marca%20Blanca%20($390%20USD)) | Distribución ilimitada bajo tu propia marca y logotipo, cero regalías por caja, colección Postman, especificación OpenAPI 3.0 y keygen. |
+| **Consultoría & Adaptaciones** | Proyectos corporativos y cadenas | **A convenir** | [💬 Cotizar Proyecto](https://wa.me/584126165227?text=Hola%20Darwin,%20deseo%20cotizar%20un%20proyecto%20a%20medida%20con%20OmniBridge%20POS) | Homologación de balanzas industriales específicas, integración asistida con Odoo, WooCommerce, PHP o React, y soporte prioritario. |
 
 ---
 
