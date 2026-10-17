@@ -6,13 +6,13 @@
 [![Language](https://img.shields.io/badge/Language-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/Platforms-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
 [![Release](https://img.shields.io/badge/Release-v1.1.8_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
-[![Video Demo](https://img.shields.io/badge/Video_Demo-Watch_Promo-red.svg)](docs/OmniBridge_POS_Promo_Video.mp4)
-[![Interactive Guide](https://img.shields.io/badge/Visual_Guide-Open_Showcase-blueviolet.svg)](docs/GUIA_VISUAL_COMERCIAL.html)
+[![Interactive Guide](https://img.shields.io/badge/Visual_Guide-Open_Live_Showcase-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
+[![Video Demo](https://img.shields.io/badge/Video_Demo-Watch_Promo-red.svg)](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)
 [![License](https://img.shields.io/badge/License-Commercial_%2F_Proprietary-red.svg)](LICENSE.txt)
 
 ![OmniBridge POS](docs/upwork_portfolio_thumbnail.png)
 
-> 🎬 **[Watch 1-Minute Video Demo with Audio (1:06 min)](docs/OmniBridge_POS_Promo_Video.mp4)** &nbsp;|&nbsp; 🌐 **[Open Interactive Visual Guide & Hardware Playground](docs/GUIA_VISUAL_COMERCIAL.html)** &nbsp;|&nbsp; 📄 **[Download Commercial Brochure (PDF)](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)**
+> 🌐 **[Open Interactive Live Showcase & Playground](https://dpadrino.github.io/omnibridge-pos-demo/)** &nbsp;|&nbsp; 🎬 **[Watch 1-Minute Video Demo with Audio](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)** &nbsp;|&nbsp; 📄 **[Download Commercial Brochure (PDF)](docs/OmniBridge_POS_Brochure_Comercial.en.pdf)**
 
 ---
 
@@ -33,8 +33,8 @@ Experience the product in action and explore the hardware workflow before deploy
 
 | Resource | Description | Direct Access |
 | :--- | :--- | :--- |
-| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough explaining the browser popup issue and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch MP4 Video**](docs/OmniBridge_POS_Promo_Video.mp4) |
-| 🌐 **Interactive Visual Showcase** | Interactive HTML5 playground: simulate silent thermal printing, live scale readings, and cash drawer kick directly in your browser. | 🚀 [**Open Interactive Guide**](docs/GUIA_VISUAL_COMERCIAL.html) *(or double-click `docs/GUIA_VISUAL_COMERCIAL.html`)* |
+| 🌐 **Interactive Visual Showcase** | Interactive HTML5 playground: simulate silent thermal printing, live scale readings, and cash drawer kick directly in your browser without installing anything. | 🚀 [**Launch Live Showcase (GitHub Pages)**](https://dpadrino.github.io/omnibridge-pos-demo/) |
+| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough with human voiceover explaining the browser popup problem and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch Video Online**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) *(or download [MP4](docs/OmniBridge_POS_Promo_Video.mp4))* |
 | 📄 **Commercial Brochure (PDF)** | Comprehensive 2-page executive summary with technical specs, REST architecture, and pricing. | 📥 [**Download PDF Brochure**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf) |
 
 ---
@@ -102,7 +102,7 @@ When you are ready to remove evaluation quotas and watermarks, upgrade to a comm
 | Plan | Target Audience | Pricing | What's Included |
 | :--- | :--- | :--- | :--- |
 | **Station / POS License** | Retail stores, supermarkets, pharmacies | **$35 USD** / yr per POS (or **$90 lifetime**) | 1-Click Windows Service installer, unlimited receipts and scale readings, zero watermarks, and live host configuration wizard. |
-| **OEM / White-Label Partner** | Software houses, Cloud POS / ERP SaaS | **$1,490 USD** (One-time fee) | Unlimited distribution under your own brand name and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
+| **OEM / White-Label Partner** | Software houses, Cloud POS / ERP SaaS | **$390 USD** (One-time fee) | Unlimited distribution under your own brand name and logo, zero per-seat royalties, full Postman collection, OpenAPI 3.0 spec, and keygen tool. |
 | **Custom Engineering** | Bespoke corporate integrations | **Project Quote** | Industrial scale protocols, custom drivers, and assisted integration with Odoo, WooCommerce, or custom backends. |
 
 ---
