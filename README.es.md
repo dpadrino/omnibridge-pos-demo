@@ -6,6 +6,8 @@
 [![Lenguaje](https://img.shields.io/badge/Lenguaje-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Plataformas](https://img.shields.io/badge/Plataformas-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
 [![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.1.8_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Descargas Totales](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Descargas)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Stars](https://img.shields.io/github/stars/dpadrino/omnibridge-pos-demo?style=flat&color=yellow&label=Estrellas)](https://github.com/dpadrino/omnibridge-pos-demo/stargazers)
 [![Simulador Online](https://img.shields.io/badge/Simulador_Web-Abrir_en_Vivo-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
 [![Video Demo](https://img.shields.io/badge/Video_Demo-Ver_en_la_Web-red.svg)](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)
 [![Licencia](https://img.shields.io/badge/Licencia-Comercial_%2F_Propietaria-red.svg)](LICENSE.txt)
@@ -44,6 +46,10 @@ Para conocer el producto en acción y experimentar el flujo de hardware antes de
 ---
 
 ## 3. ⚡ Descarga Rápida de la Versión DEMO
+
+[![Descargas de la Versión](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/latest/total?color=blue&label=Descargas%20v1.1.8)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Descargas Totales](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Descargas%20Totales)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Estadísticas en Vivo](https://img.shields.io/badge/Anal%C3%ADticas_en_Vivo-Ver_Estad%C3%ADsticas-informational.svg)](https://tofrontend.com/github-release-stats/?username=dpadrino&repository=omnibridge-pos-demo)
 
 Puedes descargar el instalador y paquete de evaluación directamente desde la sección de Releases:
 
@@ -134,7 +140,16 @@ Para desbloquear operaciones ilimitadas y eliminar marcas de agua de evaluación
 
 ---
 
-## 9. Contacto Comercial y Soporte
+## 9. Comunidad y Tracción del Proyecto
+
+Si encuentras útil o interesante esta solución, ¡apóyanos dejándonos una ⭐ **Estrella (Star)** en GitHub para ayudar a que más desarrolladores y empresas la descubran!
+
+* 💡 **Reporte de incidencias y sugerencias:** Abre un ticket en [GitHub Issues](https://github.com/dpadrino/omnibridge-pos-demo/issues).
+* 📊 **Métricas de descargas en tiempo real:** Consulta las estadísticas en vivo de los instaladores en [GitHub Release Stats](https://tofrontend.com/github-release-stats/?username=dpadrino&repository=omnibridge-pos-demo) o el crecimiento de favoritos en [Star History](https://star-history.com/#dpadrino/omnibridge-pos-demo).
+
+---
+
+## 10. Contacto Comercial y Soporte
 
 Para consultas comerciales, compra de licencias o integración técnica:
 

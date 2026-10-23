@@ -6,6 +6,8 @@
 [![Language](https://img.shields.io/badge/Language-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/Platforms-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
 [![Release](https://img.shields.io/badge/Release-v1.1.8_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Total Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Stars](https://img.shields.io/github/stars/dpadrino/omnibridge-pos-demo?style=flat&color=yellow&label=Stars)](https://github.com/dpadrino/omnibridge-pos-demo/stargazers)
 [![Interactive Guide](https://img.shields.io/badge/Visual_Guide-Open_Live_Showcase-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
 [![Video Demo](https://img.shields.io/badge/Video_Demo-Watch_Promo-red.svg)](https://dpadrino.github.io/omnibridge-pos-demo/#video-section)
 [![License](https://img.shields.io/badge/License-Commercial_%2F_Proprietary-red.svg)](LICENSE.txt)
@@ -44,6 +46,10 @@ Experience the product in action and explore the hardware workflow before deploy
 ---
 
 ## 3. ⚡ Quick Download & Evaluation DEMO
+
+[![Latest Release Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/latest/total?color=blue&label=v1.1.8%20Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Total Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Total%20Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Live Release Stats](https://img.shields.io/badge/Live_Analytics-View_Download_Stats-informational.svg)](https://tofrontend.com/github-release-stats/?username=dpadrino&repository=omnibridge-pos-demo)
 
 You can download the pre-compiled evaluation package directly from the GitHub Releases page:
 
@@ -134,7 +140,16 @@ When you are ready to remove evaluation quotas and watermarks, upgrade to a comm
 
 ---
 
-## 9. Developer & Sales Contact
+## 9. Community & Project Traction
+
+If you find this project useful or interesting, please consider giving it a ⭐ **Star** on GitHub to help others discover it!
+
+* 💡 **Feature Requests & Feedback:** Open an issue on [GitHub Issues](https://github.com/dpadrino/omnibridge-pos-demo/issues).
+* 📊 **Real-time Download Metrics:** Inspect live asset statistics on [GitHub Release Stats](https://tofrontend.com/github-release-stats/?username=dpadrino&repository=omnibridge-pos-demo) or star growth on [Star History](https://star-history.com/#dpadrino/omnibridge-pos-demo).
+
+---
+
+## 10. Developer & Sales Contact
 
 For commercial inquiries, license purchases, or custom driver support:
 
