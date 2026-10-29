@@ -44,7 +44,12 @@ if ((Test-Path $CurrentExe) -and ($CurrentDir -ne (Get-Item $InstallDir).FullNam
         Copy-Item (Join-Path $CurrentDir "license.key") $InstallDir -Force
     }
 } else {
-    Write-Host "[2/5] Verificando archivos de ejecucion..." -ForegroundColor Green
+    Write-Host "[2/5] Verificando archivos de ejecucion en $InstallDir..." -ForegroundColor Green
+    if (-not (Test-Path (Join-Path $InstallDir "config.toml"))) {
+        if (Test-Path (Join-Path $InstallDir "config.example.toml")) {
+            Copy-Item (Join-Path $InstallDir "config.example.toml") (Join-Path $InstallDir "config.toml") -Force
+        }
+    }
 }
 
 if (-not (Test-Path $TargetExe)) {
@@ -52,29 +57,54 @@ if (-not (Test-Path $TargetExe)) {
     exit 1
 }
 
+# Asegurar existencia de config.toml
+$TargetConfig = Join-Path $InstallDir "config.toml"
+if (-not (Test-Path $TargetConfig)) {
+    if (Test-Path (Join-Path $CurrentDir "config.toml")) {
+        Copy-Item (Join-Path $CurrentDir "config.toml") $TargetConfig -Force
+    } elseif (Test-Path (Join-Path $CurrentDir "config.example.toml")) {
+        Copy-Item (Join-Path $CurrentDir "config.example.toml") $TargetConfig -Force
+    } elseif (Test-Path (Join-Path $InstallDir "config.example.toml")) {
+        Copy-Item (Join-Path $InstallDir "config.example.toml") $TargetConfig -Force
+    }
+}
+
 # 4. Preparar utilidades (tools\nssm.exe y tools\SumatraPDF.exe)
 $ToolsDir = Join-Path $InstallDir "tools"
-$InstallerTools = Join-Path $InstallDir "installer\tools"
+$InstallerToolsCandidates = @(
+    (Join-Path $InstallDir "installer\tools"),
+    (Join-Path $CurrentDir "installer\tools"),
+    (Join-Path $CurrentDir "tools")
+)
 
 if (-not (Test-Path $ToolsDir)) {
-    if (Test-Path $InstallerTools) {
-        Write-Host "[3/5] Preparando carpeta de herramientas (tools)..." -ForegroundColor Yellow
-        Copy-Item -Recurse $InstallerTools $ToolsDir
-    } else {
-        New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
+    Write-Host "[3/5] Creando carpeta de herramientas: $ToolsDir..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
+}
+
+foreach ($cand in $InstallerToolsCandidates) {
+    if (Test-Path $cand) {
+        Write-Host "      Copiando utilidades desde $cand hacia $ToolsDir..." -ForegroundColor DarkYellow
+        Copy-Item -Path "$cand\*" -Destination $ToolsDir -Force -ErrorAction SilentlyContinue
     }
-} else {
-    Write-Host "[3/5] Carpeta de herramientas (tools) verificada." -ForegroundColor Green
 }
 
 $NssmExe = Join-Path $ToolsDir "nssm.exe"
 if (-not (Test-Path $NssmExe)) {
-    if (Test-Path (Join-Path $InstallerTools "nssm.exe")) {
-        $NssmExe = Join-Path $InstallerTools "nssm.exe"
-    } else {
-        Write-Error "ERROR: No se encontro 'nssm.exe' en $ToolsDir ni en $InstallerTools"
-        exit 1
+    foreach ($cand in $InstallerToolsCandidates) {
+        $nssmCand = Join-Path $cand "nssm.exe"
+        if (Test-Path $nssmCand) {
+            $NssmExe = $nssmCand
+            break
+        }
     }
+}
+
+if (-not (Test-Path $NssmExe)) {
+    Write-Error "ERROR: No se encontro 'nssm.exe' en $ToolsDir ni en las carpetas de instalacion."
+    exit 1
+} else {
+    Write-Host "[3/5] Herramientas verificadas (NSSM y SumatraPDF listos)." -ForegroundColor Green
 }
 
 # 5. Detener servicio previo si ya existia

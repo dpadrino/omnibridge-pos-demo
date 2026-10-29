@@ -17,6 +17,9 @@ legacy_label_port = 0
 
 # Orígenes exactos del POS web autorizados para llamadas desde el navegador.
 # Lista vacía bloquea solicitudes con Origin; no usar "*".
+# Editable desde el dashboard: un origen http(s)://sitio[:puerto], sin rutas.
+# Si se omite la clave, se cargan los sitios comerciales históricos predeterminados;
+# una lista explícita los reemplaza (incluido [] para retirarlos todos).
 cors_origins = []
 
 # Para un bind distinto de loopback, configurar una clave aleatoria y enviarla como
@@ -37,6 +40,16 @@ port = "auto"
 # Velocidad de comunicación en baudios (comúnmente 9600 o 4800)
 baud_rate = 9600
 
+# Formato serial: "8N1" (predeterminado) o "7E1".
+serial_format = "8N1"
+# Sondeo: "w_then_p" (predeterminado) o "w" (solo W seguido de CR/LF).
+poll_command = "w_then_p"
+# Opcionales: si se omiten, se conserva el comportamiento del controlador/crate.
+# dtr = false
+# rts = false
+# Tecniscale TBG-30 probada en COM1: serial_format = "7E1",
+# poll_command = "w", dtr = false, rts = false. Ver FAQ Q1.5.
+
 # Tiempo límite de espera de lectura en milisegundos
 timeout_ms = 1000
 
@@ -48,6 +61,11 @@ timeout_ms = 1000
 simulation_mode = false
 
 [printer]
+# Orígenes de los servidores desde los que se pueden descargar PDF para imprimir.
+# Independiente de server.cors_origins. [] conserva las descargas actuales.
+# Al llenar la lista, solo se permiten esos orígenes (sin rutas del PDF).
+# No omite protecciones anti-SSRF, límites de tamaño ni bloqueo de redirecciones.
+allowed_download_origins = []
 # Nombre exacto de la impresora térmica de tickets en el Sistema Operativo
 # Ejemplos en Windows: "POS-80", "Xprinter XP-58", "Generic / Text Only"
 default_printer = "POS-80"
@@ -94,5 +112,28 @@ allow_private_network_downloads = false
 # Tiempo límite de espera para impresión y procesos externos en segundos
 print_timeout_sec = 30
 
+[biometric]
+# Habilitar integración de hardware biométrico externo (captahuellas USB o relojes checadores de pared)
+enabled = false
 
+# Tipo de dispositivo:
+# "network_clock": Reloj checador de pared TCP/IP (protocolo ZKTeco / UDP/TCP puerto 4370)
+# "usb_desktop": Captahuellas USB de escritorio para enrolamiento de personal
+device_type = "network_clock"
+
+# Dirección IP del reloj checador en la red local
+clock_ip = "192.168.1.201"
+
+# Puerto de comunicación del reloj checador (por defecto 4370 para protocolo ZKTeco)
+clock_port = 4370
+
+# Identificadores USB para captahuellas de escritorio (opcional, ej. ZKTeco ZK9500 / Live20R 0x1B55:0x0120)
+# usb_vendor_id = 6997
+# usb_product_id = 288
+
+# Intervalo en segundos para sincronización pull periódica de marcajes hacia el ERP
+pull_interval_seconds = 300
+
+# Habilitar receptor de eventos Push automáticos del reloj (ADMS Push)
+push_enabled = true
 

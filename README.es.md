@@ -5,7 +5,7 @@
 
 [![Lenguaje](https://img.shields.io/badge/Lenguaje-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Plataformas](https://img.shields.io/badge/Plataformas-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.1.8_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.2.0_Evaluaci%C3%B3n_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Descargas Totales](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Descargas)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Stars](https://img.shields.io/github/stars/dpadrino/omnibridge-pos-demo?style=flat&color=yellow&label=Estrellas)](https://github.com/dpadrino/omnibridge-pos-demo/stargazers)
 [![Simulador Online](https://img.shields.io/badge/Simulador_Web-Abrir_en_Vivo-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
@@ -40,20 +40,20 @@ Para conocer el producto en acción y experimentar el flujo de hardware antes de
 | Recurso Multimedia | Descripción | Acceso Directo |
 | :--- | :--- | :--- |
 | 🌐 **Guía Visual & Simulador Web** | Demostración interactiva en HTML5: prueba la impresión térmica en vivo, simula lecturas de balanza digital y apertura de gaveta en tu navegador sin instalar nada. | 🚀 [**Abrir Simulador Online (GitHub Pages)**](https://dpadrino.github.io/omnibridge-pos-demo/) |
-| 🎬 **Video Comercial con Locución** | Video Full HD de 1 minuto explicando el problema de la ventana emergente de Chrome y cómo OmniBridge POS lo resuelve al instante con voz profesional y música de fondo. | ▶️ [**Reproducir Video en la Web**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) <br> 📥 [Descargar MP4 Directo (1.8 MB)](https://github.com/dpadrino/omnibridge-pos-demo/releases/download/v1.1.8/OmniBridge_POS_Promo_Video.mp4) |
+| 🎬 **Video Comercial con Locución** | Video Full HD de 1 minuto explicando el problema de la ventana emergente de Chrome y cómo OmniBridge POS lo resuelve al instante con voz profesional y música de fondo. | ▶️ [**Reproducir Video en la Web**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) <br> 📥 [Descargar MP4 Directo (1.8 MB)](https://github.com/dpadrino/omnibridge-pos-demo/releases/download/v1.2.0/OmniBridge_POS_Promo_Video.mp4) |
 | 📄 **Folleto Comercial Oficial (PDF)** | Documento formal de 2 páginas con ficha técnica, arquitectura REST, tabla de endpoints y comparativa. | 📥 [**Descargar Folleto PDF**](docs/OmniBridge_POS_Brochure_Comercial.es.pdf) |
 
 ---
 
 ## 3. ⚡ Descarga Rápida de la Versión DEMO
 
-[![Descargas de la Versión](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/latest/total?color=blue&label=Descargas%20v1.1.8)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Descargas de la Versión](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/latest/total?color=blue&label=Descargas%20v1.2.0)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Descargas Totales](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Descargas%20Totales)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Estadísticas en Vivo](https://img.shields.io/badge/Anal%C3%ADticas_en_Vivo-Ver_Estad%C3%ADsticas-informational.svg)](https://tofrontend.com/github-release-stats/?username=dpadrino&repository=omnibridge-pos-demo)
 
 Puedes descargar el instalador y paquete de evaluación directamente desde la sección de Releases:
 
-👉 **[Descargar Paquete DEMO Oficial (v1.1.8)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
+👉 **[Descargar Paquete DEMO Oficial (v1.2.0)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
 
 ### El Modo de Evaluación Gratuito incluye:
 * **Acceso completo a todos los endpoints** en el puerto unificado `8989`.
@@ -117,6 +117,10 @@ await fetch('http://localhost:8989/ticket', {
 | `GET/POST`| `/api/v1/config` | `/config` | Consulta y guardado gráfico de variables del host en vivo | JSON Config Payload |
 | `GET/POST`| `/api/v1/license`| `/license` | Consulta de vigencia y activación en caliente de licencia | JSON License Status |
 | `GET` | `/health` | `/status` | Diagnóstico de salud: puertos, spooler y licencias | JSON Health Status |
+| `GET` | `/biometric/health` | `/biometric/status` | Estado de conexión de hardware biométrico (ZKTeco / USB) | JSON Biometric Status |
+| `POST`| `/biometric/enroll` | `/api/v1/biometric/enroll` | Enrolamiento de huella digital de empleado | JSON Template |
+| `GET` | `/biometric/logs` | `/api/v1/biometric/logs` | Consulta de marcajes de asistencia con filtro de fecha | JSON Attendance Logs |
+| `POST`| `/biometric/push` | `/iclock/cdata` | Receptor de eventos Push (protocolo ADMS de reloj o JSON) | Text/JSON |
 
 ---
 

@@ -11,7 +11,13 @@ info:
     requieren `Authorization: Bearer <api_key>` o `x-api-key`. La apertura de gaveta es POST-only.
     Las descargas requieren una URL directa de PDF: no se siguen redirecciones y las direcciones
     resueltas se validan y fijan para la conexión.
-  version: 1.1.0
+    El configurador web y POST /api/v1/config permiten editar dos listas independientes:
+    cors_origins (sitios que llaman a la API) y allowed_download_origins (servidores de PDF).
+    Cada entrada es un origen HTTP/HTTPS sin rutas ni comodines; se requieren guardado y reinicio.
+    Una lista explícita de CORS reemplaza los sitios históricos; [] revoca los sitios externos
+    manteniendo el dashboard local. En descargas, [] conserva la política anti-SSRF existente;
+    una lista no vacía restringe los servidores sin omitir las demás protecciones.
+  version: 1.2.0
   contact:
     name: Darwin Padrino
     email: drinowar@gmail.com
@@ -664,6 +670,109 @@ paths:
       responses:
         '200':
           $ref: '#/paths/~1health/get/responses/200'
+
+  /biometric/health:
+    get:
+      summary: Estado de Salud del Dispositivo Biométrico
+      tags:
+        - Biométrico y Control de Asistencia
+      responses:
+        '200':
+          description: Estado del reloj checador o captahuellas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  biometric:
+                    type: object
+                    properties:
+                      connected:
+                        type: boolean
+                        example: true
+                      device_type:
+                        type: string
+                        example: network_clock
+                      ip:
+                        type: string
+                        example: "192.168.1.201"
+                      port:
+                        type: integer
+                        example: 4370
+
+  /biometric/status:
+    get:
+      summary: Estado del Dispositivo Biométrico (Alias)
+      tags:
+        - Biométrico y Control de Asistencia
+      responses:
+        '200':
+          $ref: '#/paths/~1biometric~1health/get/responses/200'
+
+  /biometric/enroll:
+    post:
+      summary: Enrolar Huella Dactilar de Empleado
+      tags:
+        - Biométrico y Control de Asistencia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - employee_id
+              properties:
+                employee_id:
+                  type: string
+                  example: "V-12345678"
+                finger:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Plantilla biométrica enrolada exitosamente
+        '400':
+          description: ID de empleado ausente o inválido
+
+  /biometric/logs:
+    get:
+      summary: Consultar Registros de Asistencia
+      tags:
+        - Biométrico y Control de Asistencia
+      parameters:
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "2026-10-29T00:00:00Z"
+      responses:
+        '200':
+          description: Lista de marcajes de asistencia recuperados
+
+  /biometric/push:
+    post:
+      summary: Receptor de Marcajes Push (ADMS y JSON)
+      tags:
+        - Biométrico y Control de Asistencia
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+      responses:
+        '200':
+          description: Marcajes procesados exitosamente
 
 components:
   schemas:

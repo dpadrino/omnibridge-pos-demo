@@ -5,7 +5,7 @@
 
 [![Language](https://img.shields.io/badge/Language-Rust_2021-orange.svg)](https://www.rust-lang.org/)
 [![Platform](https://img.shields.io/badge/Platforms-Windows_%7C_Linux_%7C_macOS-blue.svg)]()
-[![Release](https://img.shields.io/badge/Release-v1.1.8_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Release](https://img.shields.io/badge/Release-v1.2.0_Evaluation_DEMO-brightgreen.svg)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Total Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Stars](https://img.shields.io/github/stars/dpadrino/omnibridge-pos-demo?style=flat&color=yellow&label=Stars)](https://github.com/dpadrino/omnibridge-pos-demo/stargazers)
 [![Interactive Guide](https://img.shields.io/badge/Visual_Guide-Open_Live_Showcase-blueviolet.svg)](https://dpadrino.github.io/omnibridge-pos-demo/)
@@ -40,20 +40,20 @@ Experience the product in action and explore the hardware workflow before deploy
 | Resource | Description | Direct Access |
 | :--- | :--- | :--- |
 | 🌐 **Interactive Visual Showcase** | Interactive HTML5 playground: simulate silent thermal printing, live scale readings, and cash drawer kick directly in your browser without installing anything. | 🚀 [**Launch Live Showcase (GitHub Pages)**](https://dpadrino.github.io/omnibridge-pos-demo/) |
-| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough with human voiceover explaining the browser popup problem and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch Video Online**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) <br> 📥 [Download Direct MP4 (1.8 MB)](https://github.com/dpadrino/omnibridge-pos-demo/releases/download/v1.1.8/OmniBridge_POS_Promo_Video.mp4) |
+| 🎬 **Video Demo with Voiceover** | 1-minute Full HD video walkthrough with human voiceover explaining the browser popup problem and how OmniBridge POS resolves it with sub-second silent printing. | ▶️ [**Watch Video Online**](https://dpadrino.github.io/omnibridge-pos-demo/#video-section) <br> 📥 [Download Direct MP4 (1.8 MB)](https://github.com/dpadrino/omnibridge-pos-demo/releases/download/v1.2.0/OmniBridge_POS_Promo_Video.mp4) |
 | 📄 **Commercial Brochure (PDF)** | Comprehensive 2-page executive summary with technical specs, REST architecture, and pricing. | 📥 [**Download PDF Brochure**](docs/OmniBridge_POS_Brochure_Comercial.en.pdf) |
 
 ---
 
 ## 3. ⚡ Quick Download & Evaluation DEMO
 
-[![Latest Release Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/latest/total?color=blue&label=v1.1.8%20Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
+[![Latest Release Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/latest/total?color=blue&label=v1.2.0%20Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Total Downloads](https://img.shields.io/github/downloads/dpadrino/omnibridge-pos-demo/total?color=blue&label=Total%20Downloads)](https://github.com/dpadrino/omnibridge-pos-demo/releases)
 [![Live Release Stats](https://img.shields.io/badge/Live_Analytics-View_Download_Stats-informational.svg)](https://tofrontend.com/github-release-stats/?username=dpadrino&repository=omnibridge-pos-demo)
 
 You can download the pre-compiled evaluation package directly from the GitHub Releases page:
 
-👉 **[Download Latest Evaluation DEMO (v1.1.8)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
+👉 **[Download Latest Evaluation DEMO (v1.2.0)](https://github.com/dpadrino/omnibridge-pos-demo/releases)**
 
 ### Free Evaluation Mode Includes:
 * **Full access to all REST endpoints** on port `8989`.
@@ -117,6 +117,10 @@ await fetch('http://localhost:8989/ticket', {
 | `GET/POST`| `/api/v1/config` | Query and live-save host variables atomically | JSON Config Payload |
 | `GET/POST`| `/api/v1/license`| Query validity status and hot-activate license key | JSON License Status |
 | `GET` | `/health`, `/status` | Complete health check across ports, spooler, and license | JSON Health Status |
+| `GET` | `/biometric/health` | Biometric hardware connectivity and status | JSON Biometric Status |
+| `POST`| `/biometric/enroll` | Employee fingerprint enrollment | JSON Template |
+| `GET` | `/biometric/logs` | Time attendance punch records with date filtering | JSON Attendance Logs |
+| `POST`| `/biometric/push` | Real-time push punch receiver (ZKTeco ADMS / JSON) | Text/JSON |
 
 ---
 
