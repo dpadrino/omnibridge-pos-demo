@@ -1,0 +1,25 @@
+[Unit]
+Description=OmniBridge POS - Peripherals Gateway Service (Rust)
+Documentation=https://github.com/dpadrino/pos-peripherals-agent
+After=network.target network-online.target systemd-udev-settle.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=dialout
+WorkingDirectory=/opt/omnibridge
+ExecStart=/opt/omnibridge/pos-peripherals-agent
+Restart=always
+RestartSec=3s
+LimitNOFILE=65536
+Environment="RUST_LOG=info,pos_peripherals_agent=info"
+
+# Seguridad y aislamiento
+ProtectSystem=full
+ProtectHome=read-only
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

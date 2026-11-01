@@ -17,6 +17,32 @@ info:
     Una lista explícita de CORS reemplaza los sitios históricos; [] revoca los sitios externos
     manteniendo el dashboard local. En descargas, [] conserva la política anti-SSRF existente;
     una lista no vacía restringe los servidores sin omitir las demás protecciones.
+    Fuera de loopback, todos los alias health/status (incluidos los
+    biométricos) requieren API key; ausencia o clave incorrecta devuelve HTTP 401.
+    En loopback esos diagnósticos conservan su acceso sin clave. Los listeners
+    legacy comparten estas reglas. GET /api/v1/health/live es público y devuelve
+    solo {"status":"ok"} sin consultar hardware; la política de Origin sigue vigente.
+    Panel, configuración, licencias, mantenimiento y enrolamiento requieren credencial
+    administrativa independiente y bind loopback; fuera de loopback devuelven 403.
+    El login local /admin/login establece una sesión HttpOnly/SameSite=Strict de 30 minutos;
+    escrituras con cookie y login JSON exigen Origin local del puerto principal.
+    Un Origin POS autorizado por CORS no concede acceso administrativo. Clientes nativos
+    pueden usar la clave administrativa en Bearer o x-api-key sin Origin.
+    Sin server.admin_key aleatoria de 32-256 bytes, distinta de api_key, administración
+    bloqueada. Credenciales solo se configuran/rotan en disco con reinicio.
+    Despacho RAW Linux/macOS (etiquetas, tickets RAW, matriz y gaveta, incluidos alias):
+    éxito solo al terminar correctamente lpr -l; lp -o raw se usa únicamente si lpr
+    no está instalado. HTTP 500 indica rechazo, señal o fallo de ejecución; HTTP 504
+    indica timeout. No hay reenvío automático ni simulación implícita. El éxito no
+    confirma impresión física o apertura de gaveta. Tras un timeout revisar la cola
+    antes de reintentar para evitar duplicados. mock/simulator siguen siendo explícitos.
+    Cada instancia limita a 4 workers simultáneos de despacho de impresión, gaveta,
+    páginas de prueba y limpieza (incluidos alias y simulación). Agotados los cupos,
+    devuelve HTTP 503 con status=error: ese despacho no fue enviado ni encolado.
+    No hay reintento automático. Preparación de archivos y controles DEMO preceden
+    a la admisión. El límite no controla uploads/descargas ni la cola del spooler.
+    Timeout HTTP o cancelación del cliente no cancela el worker ya iniciado:
+    conserva el cupo y archivo temporal hasta terminar. Pesada usa un bloqueo independiente.
   version: 1.2.0
   contact:
     name: Darwin Padrino
@@ -34,6 +60,11 @@ servers:
   - url: http://127.0.0.1:8003
     description: Servidor Local Secundario (Retrocompatibilidad Etiquetas TSPL / Cloud POS)
 
+security:
+  - {}
+  - OperationalBearer: []
+  - OperationalApiKey: []
+
 tags:
   - name: Báscula (Scale)
     description: Lectura de peso en tiempo real desde balanzas seriales o USB.
@@ -49,15 +80,315 @@ tags:
     description: Impresión silenciosa de documentos de oficina, hojas membretadas y reportes ejecutivos (PDF, A4/Carta) en impresoras láser o de inyección de tinta.
   - name: Mantenimiento y Diagnóstico
     description: Catálogo de impresoras del SO, purga de colas y comprobación de salud.
+  - name: Biométrico y Control de Asistencia
+    description: Capacidades experimentales documentadas; no certifica captura USB ni enrolamiento.
 
 paths:
+  /api/v1/scale/weight:
+    $ref: '#/paths/~1peso'
+  /api/v1/scale:
+    $ref: '#/paths/~1peso'
+  /api/v1/ticket:
+    $ref: '#/paths/~1ticket'
+  /api/v1/print/ticket:
+    $ref: '#/paths/~1ticket'
+  /impresora/ticket:
+    $ref: '#/paths/~1ticket'
+  /api/v1/print/ticket/url:
+    $ref: '#/paths/~1print~1url'
+  /api/v1/drawer:
+    $ref: '#/paths/~1drawer'
+  /api/v1/drawer/open:
+    $ref: '#/paths/~1drawer'
+  /api/v1/print/label:
+    $ref: '#/paths/~1print-label'
+  /impresora/etiquetas:
+    $ref: '#/paths/~1impresora~1etiqueta'
+  /labels/print:
+    $ref: '#/paths/~1impresora~1etiqueta'
+  /label/print:
+    $ref: '#/paths/~1impresora~1etiqueta'
+  /api/v1/print/matrix:
+    $ref: '#/paths/~1print-matrix'
+  /impresora/forma-continua:
+    $ref: '#/paths/~1impresora~1matriz'
+  /matrix/print:
+    $ref: '#/paths/~1impresora~1matriz'
+  /print/document:
+    $ref: '#/paths/~1api~1v1~1print~1document'
+  /print/document/url:
+    $ref: '#/paths/~1api~1v1~1print~1document~1url'
+  /impresora/documento/url:
+    $ref: '#/paths/~1api~1v1~1print~1document~1url'
+  /api/v1/printers:
+    $ref: '#/paths/~1printers'
+  /api/v1/health:
+    $ref: '#/paths/~1health'
+  /api/v1/status:
+    $ref: '#/paths/~1status'
+  /api/v1/biometric/health:
+    $ref: '#/paths/~1biometric~1health'
+  /api/v1/biometric/status:
+    $ref: '#/paths/~1biometric~1status'
+  /api/v1/biometric/logs:
+    $ref: '#/paths/~1biometric~1logs'
+  /api/v1/biometric/push:
+    $ref: '#/paths/~1biometric~1push'
+  /iclock/cdata:
+    $ref: '#/paths/~1biometric~1push'
+  /admin/login:
+    get:
+      summary: Login administrativo local o instrucciones de configuración inicial
+      security: []
+      responses:
+        '200':
+          description: HTML sin secretos ni inventario de hardware; formulario deshabilitado sin clave válida.
+          content:
+            text/html:
+              schema:
+                type: string
+        '403':
+          description: Bind no loopback u Origin externo.
+  /admin/session:
+    post:
+      summary: Iniciar sesión administrativa local
+      description: Requiere Origin local del puerto principal; JSON máximo 1024 bytes. Cinco intentos por minuto y hasta 16 sesiones globales por proceso.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [admin_key]
+              properties:
+                admin_key:
+                  type: string
+                  minLength: 32
+                  maxLength: 256
+                  writeOnly: true
+      responses:
+        '200':
+          description: Cookie de sesión aleatoria; caducidad absoluta 1800 segundos.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: omnibridge_admin_session; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800. HTTP loopback, no Secure.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, expires_in]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  expires_in:
+                    type: integer
+                    enum: [1800]
+        '400':
+          description: JSON inválido.
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '413':
+          description: JSON excede 1024 bytes.
+        '422':
+          description: Campos JSON ausentes, desconocidos o de tipo incorrecto.
+        '429':
+          description: Límite global de intentos o sesiones alcanzado.
+        '500':
+          description: No se pudo obtener entropía del sistema operativo.
+    delete:
+      summary: Revocar la sesión enviada en la cookie
+      description: Reiniciar también revoca todas las sesiones; cookies de otros navegadores no se revocan al cerrar una sesión.
+      security: &adminSecurity
+        - AdminSession: []
+        - AdminBearer: []
+        - AdminApiKey: []
+      responses:
+        '200':
+          description: Sesión revocada y cookie eliminada con Max-Age=0.
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+  /api/v1/config:
+    get:
+      summary: Configuración administrativa y hardware detectado
+      security: *adminSecurity
+      responses:
+        '200':
+          description: config es el estado activo; saved_config contiene valores guardados (o activos si aun no existe archivo). restart_required indica diferencias, incluidas credenciales, sin exponerlas. api_key y admin_key enmascaradas.
+        '500':
+          description: No se pudo leer el archivo guardado; no se utiliza fallback si existe pero es invalido o ilegible.
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+    post:
+      summary: Guardar campos de configuración soportados
+      description: Los 35 campos no secretos son editables. Cambios parciales, validados antes de escribir, sobre el archivo de origen del proceso. No permite editar credenciales. Requiere reinicio para activar cambios; lecturas y escrituras se serializan dentro del agente.
+      security: *adminSecurity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigUpdate'
+      responses:
+        '200':
+          description: config contiene los valores guardados sanitizados; active_config conserva los activos. restart_required indica diferencias; restart_recommended se mantiene por compatibilidad.
+        '400':
+          description: Configuración inválida.
+        '422':
+          description: JSON invalido, campo desconocido (incluidas credenciales) o tipo incorrecto.
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '500':
+          description: Fallo de persistencia.
+  /config:
+    $ref: '#/paths/~1api~1v1~1config'
+  /api/v1/license:
+    get:
+      summary: Consultar licencia y titular
+      security: *adminSecurity
+      responses:
+        '200':
+          description: Estado de licencia, plan, titular y vigencia.
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+    post:
+      summary: Activar licencia
+      security: *adminSecurity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [license_key]
+              properties:
+                license_key:
+                  type: string
+                  writeOnly: true
+      responses:
+        '200':
+          description: Licencia activada.
+        '400':
+          description: Licencia inválida.
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '500':
+          description: Fallo al persistir la licencia.
+  /license:
+    $ref: '#/paths/~1api~1v1~1license'
+  /api/v1/printers/test-page:
+    post:
+      summary: Página administrativa de prueba de impresora
+      security: *adminSecurity
+      parameters:
+        - name: printer
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: simulate
+          in: query
+          schema:
+            type: boolean
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                printer:
+                  type: string
+                type:
+                  type: string
+                simulate:
+                  type: boolean
+                mock:
+                  type: boolean
+      responses:
+        '200':
+          description: Prueba despachada o simulada explícitamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrinterTestPageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidPrintRequest'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
+        '500':
+          $ref: '#/components/responses/PrintDispatchFailure'
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+  /printers/test-page:
+    $ref: '#/paths/~1api~1v1~1printers~1test-page'
+  /impresoras/prueba:
+    $ref: '#/paths/~1api~1v1~1printers~1test-page'
+  /api/v1/printers/cleanup:
+    $ref: '#/paths/~1printers~1cleanup'
+  /printers/purge:
+    $ref: '#/paths/~1printers~1cleanup'
+  /impresoras/purgar:
+    $ref: '#/paths/~1printers~1cleanup'
+  /api/v1/biometric/enroll:
+    $ref: '#/paths/~1biometric~1enroll'
+  /api/v1/health/live:
+    get:
+      summary: Disponibilidad mínima pública del proceso HTTP
+      description: No consulta periféricos ni verifica readiness. Sigue sujeto a la política de Origin.
+      security: []
+      tags:
+        - Mantenimiento y Diagnóstico
+      responses:
+        '200':
+          description: El proceso HTTP responde.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+        '403':
+          description: Origin no autorizado.
   /:
     get:
       summary: Panel Visual de Autodiagnóstico (Dashboard HTML)
+      security: *adminSecurity
       description: Retorna una interfaz gráfica web embebida con semáforos de conexión, lectura de peso en vivo y botones de prueba.
       tags:
         - Mantenimiento y Diagnóstico
       responses:
+        '303':
+          description: Sin autenticación, redirige a /admin/login.
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
         '200':
           description: Panel web interactivo cargado exitosamente.
           content:
@@ -229,7 +560,10 @@ paths:
         Soporta:
         - JSON: `{"content": "..."}`, `{"text": "..."}` o `{"url": "https://..."}`
         - Multipart: `file=@ticket.pdf`
-        - Texto plano o comandos ESC/POS directos en el cuerpo
+        - Texto plano UTF-8 con Content-Type: text/plain
+        JSON malformado, de tipo incorrecto o sin url/content/text/raw devuelve 400 sin despacho.
+        Prioridad JSON: url, luego content, text y raw. No se convierte JSON inválido en texto.
+        En RAW Unix, éxito significa aceptación del despacho, no salida física.
       tags:
         - Tickets POS
       requestBody:
@@ -245,12 +579,23 @@ paths:
                 text:
                   type: string
                   description: Alias alternativo de content.
+                raw:
+                  type: string
+                  description: Alias de texto RAW UTF-8; no es un cuerpo binario arbitrario.
                 url:
                   type: string
                   description: URL final remota que responde directamente con PDF; no se siguen redirects.
                 printer:
                   type: string
                   description: Nombre de la impresora específica (opcional).
+                sumatra_print_settings:
+                  type: string
+                  description: Ajuste para tickets PDF; por defecto noscale.
+              anyOf:
+                - required: [url]
+                - required: [content]
+                - required: [text]
+                - required: [raw]
             example:
               content: "TIENDA DEMO\nTicket de Venta #001\nTotal: $15.50\nGracias por su compra!\n"
           multipart/form-data:
@@ -264,13 +609,26 @@ paths:
                   format: binary
                 printer:
                   type: string
+                sumatra_print_settings:
+                  type: string
+          text/plain:
+            schema:
+              type: string
       responses:
+        '400':
+          $ref: '#/components/responses/InvalidPrintRequest'
         '200':
           description: Ticket despachado exitosamente.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrintResponse'
+        '500':
+          $ref: '#/components/responses/RawDispatchFailure'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
 
   /drawer:
     post:
@@ -278,6 +636,7 @@ paths:
       description: |
         Envía el pulso de apertura estándar ESC/POS (Pin 2 y Pin 5) a la impresora térmica de tickets
         para accionar el solenoide de la gaveta de dinero física sin imprimir papel.
+        En Unix, éxito confirma despacho del pulso, no movimiento físico de gaveta.
       tags:
         - Gaveta de Dinero (Cash Drawer)
       requestBody:
@@ -290,71 +649,34 @@ paths:
                 printer:
                   type: string
                   description: Impresora a la que está conectada la gaveta (opcional, usa la ticketera predeterminada).
+                simulate:
+                  type: boolean
+                mock:
+                  type: boolean
+                test:
+                  type: boolean
       responses:
+        '400':
+          $ref: '#/components/responses/InvalidPrintRequest'
         '200':
           description: Pulso de apertura enviado con éxito a la gaveta de dinero.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DrawerResponse'
+        '500':
+          $ref: '#/components/responses/RawDispatchFailure'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
   /gaveta:
-    post:
-      summary: Abrir Gaveta de Dinero (Alias en Español)
-      description: Alias directo en español para `/drawer`.
-      tags:
-        - Gaveta de Dinero (Cash Drawer)
-      responses:
-        '200':
-          description: Pulso de apertura enviado con éxito.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DrawerResponse'
+    $ref: '#/paths/~1drawer'
   /print:
-    post:
-      summary: Imprimir Ticket PDF (Multipart Form)
-      description: Recibe un archivo PDF binario y lo envía silenciosamente a la impresora térmica seleccionada o predeterminada.
-      tags:
-        - Tickets POS
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - file
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Archivo PDF del ticket a imprimir.
-                printer:
-                  type: string
-                  description: Nombre de la impresora (opcional, si se omite auto-detecta la ticketera activa).
-                  example: "POS-80"
-                sumatra_print_settings:
-                  type: string
-                  description: Ajustes de impresión de SumatraPDF (por defecto noscale).
-                  example: "noscale"
-      responses:
-        '200':
-          description: Documento enviado a la impresora exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PrintResponse'
+    $ref: '#/paths/~1ticket'
 
   /impresora:
-    post:
-      summary: Imprimir Ticket PDF (Alias en Español)
-      tags:
-        - Tickets POS
-      requestBody:
-        $ref: '#/paths/~1print/post/requestBody'
-      responses:
-        '200':
-          $ref: '#/paths/~1print/post/responses/200'
+    $ref: '#/paths/~1ticket'
 
   /print/url:
     post:
@@ -380,29 +702,34 @@ paths:
                   type: string
                   description: Nombre de la impresora (opcional).
                   example: "POS-80"
+                sumatra_print_settings:
+                  type: string
+                  description: Ajuste de escala del ticket PDF; por defecto noscale.
       responses:
+        '400':
+          $ref: '#/components/responses/InvalidPrintRequest'
+        '500':
+          $ref: '#/components/responses/PrintDispatchFailure'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
+        default:
+          $ref: '#/components/responses/RequestFailure'
         '200':
           description: Documento descargado e impreso satisfactoriamente.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrintResponse'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
 
   /impresora/url:
-    post:
-      summary: Imprimir Ticket PDF desde URL Remota (Alias en Español)
-      tags:
-        - Tickets POS
-      requestBody:
-        $ref: '#/paths/~1print~1url/post/requestBody'
-      responses:
-        '200':
-          $ref: '#/paths/~1print~1url/post/responses/200'
+    $ref: '#/paths/~1print~1url'
 
   /print-label:
     post:
       summary: Imprimir Etiqueta RAW (TSPL / ZPL)
-      description: Envía instrucciones en lenguaje RAW (TSPL / ZPL / ESC-POS) directamente a la impresora de etiquetas mediante Direct USB y Spooler RAW.
+      description: Envía instrucciones RAW (TSPL / ZPL / ESC-POS) mediante Direct USB/Spooler en Windows o lpr -l (lp -o raw si lpr no está instalado) en Linux/macOS. Éxito confirma despacho, no salida física.
       tags:
         - Etiquetas (Labels)
       requestBody:
@@ -422,6 +749,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LabelPrintResponse'
+        '500':
+          $ref: '#/components/responses/RawDispatchFailure'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
     get:
       summary: Consultar Estado del Servicio de Etiquetas
       description: Retorna el estado del servicio TSPL y el nombre de la impresora de etiquetas detectada en el sistema.
@@ -456,11 +789,17 @@ paths:
       responses:
         '200':
           $ref: '#/paths/~1print-label/post/responses/200'
+        '500':
+          $ref: '#/components/responses/RawDispatchFailure'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
 
   /print-matrix:
     post:
       summary: Imprimir en Forma Continua / Matriz de Punto (Texto RAW / ESC-P)
-      description: Envía texto plano o comandos ESC/P directamente a la impresora de agujas en modo RAW con soporte opcional de Form Feed (\x0c).
+      description: Envía texto plano o comandos ESC/P directamente a la impresora de agujas en modo RAW con soporte opcional de Form Feed (\x0c). En Unix, éxito confirma aceptación del despacho, no impresión física.
       tags:
         - Forma Continua / Matriz
       requestBody:
@@ -480,6 +819,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MatrixPrintResponse'
+        '500':
+          $ref: '#/components/responses/RawDispatchFailure'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
     get:
       summary: Consultar Estado e Impresora de Matriz Detectada
       description: Retorna el estado del servicio y la impresora de forma continua seleccionada.
@@ -499,6 +844,12 @@ paths:
       responses:
         '200':
           $ref: '#/paths/~1print-matrix/post/responses/200'
+        '500':
+          $ref: '#/components/responses/RawDispatchFailure'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
 
   /api/v1/print/document:
     post:
@@ -536,6 +887,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrintResponse'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
     get:
       summary: Consultar Estado e Impresora Láser / Documentos Detectada
       tags:
@@ -547,7 +900,7 @@ paths:
   /api/v1/print/document/url:
     post:
       summary: Imprimir Documento desde URL Remota o Contenido de Texto
-      description: Descarga un PDF desde su URL final directa o recibe texto plano para imprimir. Las redirecciones HTTP se rechazan.
+      description: Descarga un PDF desde su URL final directa o recibe texto plano para imprimir. Las redirecciones HTTP se rechazan. Solo admite JSON en esta ruta; text_content tiene prioridad sobre url.
       tags:
         - Documentos / Láser
       requestBody:
@@ -571,24 +924,29 @@ paths:
                   type: string
                   default: "fit"
                   example: "fit"
+              anyOf:
+                - required: [text_content]
+                - required: [url]
       responses:
+        '400':
+          $ref: '#/components/responses/InvalidPrintRequest'
+        '500':
+          $ref: '#/components/responses/PrintDispatchFailure'
+        '504':
+          $ref: '#/components/responses/RawDispatchTimeout'
+        default:
+          $ref: '#/components/responses/RequestFailure'
         '200':
           description: Documento enviado a la impresora láser.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrintResponse'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
 
   /impresora/documento:
-    post:
-      summary: Imprimir Documento Láser / A4 (Alias en Español)
-      tags:
-        - Documentos / Láser
-      requestBody:
-        $ref: '#/paths/~1api~1v1~1print~1document/post/requestBody'
-      responses:
-        '200':
-          $ref: '#/paths/~1api~1v1~1print~1document/post/responses/200'
+    $ref: '#/paths/~1api~1v1~1print~1document'
 
   /printers:
     get:
@@ -616,6 +974,7 @@ paths:
   /printers/cleanup:
     post:
       summary: Purgar Trabajos Trabados del Spooler de Windows
+      security: *adminSecurity
       description: Elimina los trabajos pendientes o atascados en la cola de impresión de Windows para restaurar el flujo de impresión.
       tags:
         - Mantenimiento y Diagnóstico
@@ -630,23 +989,21 @@ paths:
                   type: string
                   description: Nombre de la impresora específica a purgar (si se omite, purga todas).
       responses:
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
         '200':
           description: Cola purgada exitosamente.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrintResponse'
+        '503':
+          $ref: '#/components/responses/DispatchBusy'
 
   /impresoras/limpiar:
-    post:
-      summary: Purgar Trabajos Trabados del Spooler (Alias en Español)
-      tags:
-        - Mantenimiento y Diagnóstico
-      requestBody:
-        $ref: '#/paths/~1printers~1cleanup/post/requestBody'
-      responses:
-        '200':
-          $ref: '#/paths/~1printers~1cleanup/post/responses/200'
+    $ref: '#/paths/~1printers~1cleanup'
 
   /health:
     get:
@@ -655,6 +1012,8 @@ paths:
       tags:
         - Mantenimiento y Diagnóstico
       responses:
+        '401':
+          description: En modo red, API key ausente, incorrecta o no configurada.
         '200':
           description: Estado de salud retornado.
           content:
@@ -668,15 +1027,24 @@ paths:
       tags:
         - Mantenimiento y Diagnóstico
       responses:
+        '401':
+          $ref: '#/paths/~1health/get/responses/401'
         '200':
           $ref: '#/paths/~1health/get/responses/200'
 
   /biometric/health:
     get:
       summary: Estado de Salud del Dispositivo Biométrico
+      description: >
+        También aplica a los aliases /biometric/status, /api/v1/biometric/health
+        y /api/v1/biometric/status. USB no tiene detección ni captura implementadas.
+        La conexión de red requiere ACK ZK válido; no certifica modelos físicos.
+        Los datos no consultados se devuelven como null, no como valores inventados.
       tags:
         - Biométrico y Control de Asistencia
       responses:
+        '401':
+          $ref: '#/paths/~1health/get/responses/401'
         '200':
           description: Estado del reloj checador o captahuellas
           content:
@@ -686,6 +1054,7 @@ paths:
                 properties:
                   status:
                     type: string
+                    enum: [ok, disabled, unsupported]
                     example: ok
                   biometric:
                     type: object
@@ -693,15 +1062,50 @@ paths:
                       connected:
                         type: boolean
                         example: true
+                      enrollment_supported:
+                        type: boolean
+                        example: false
+                      attendance_supported:
+                        type: boolean
+                        description: Lectura TCP de registros de 40 bytes, no transferencia por bloques
+                      is_simulated:
+                        type: boolean
+                        example: false
                       device_type:
                         type: string
                         example: network_clock
                       ip:
                         type: string
+                        nullable: true
                         example: "192.168.1.201"
                       port:
                         type: integer
+                        nullable: true
                         example: 4370
+                      serial_number:
+                        type: string
+                        nullable: true
+                      firmware:
+                        type: string
+                        nullable: true
+                      user_count:
+                        type: integer
+                        nullable: true
+                      log_count:
+                        type: integer
+                        nullable: true
+                      last_sync:
+                        type: string
+                        format: date-time
+                        nullable: true
+        '500':
+          $ref: '#/components/responses/BiometricFailure'
+        '501':
+          $ref: '#/components/responses/BiometricFailure'
+        '503':
+          $ref: '#/components/responses/BiometricFailure'
+        '504':
+          $ref: '#/components/responses/BiometricFailure'
 
   /biometric/status:
     get:
@@ -709,12 +1113,27 @@ paths:
       tags:
         - Biométrico y Control de Asistencia
       responses:
+        '401':
+          $ref: '#/paths/~1health/get/responses/401'
         '200':
           $ref: '#/paths/~1biometric~1health/get/responses/200'
+        '500':
+          $ref: '#/components/responses/BiometricFailure'
+        '501':
+          $ref: '#/components/responses/BiometricFailure'
+        '503':
+          $ref: '#/components/responses/BiometricFailure'
+        '504':
+          $ref: '#/components/responses/BiometricFailure'
 
   /biometric/enroll:
     post:
       summary: Enrolar Huella Dactilar de Empleado
+      description: >
+        Contrato reservado (también /api/v1/biometric/enroll). Los adaptadores
+        actuales USB y red devuelven 501, sin plantilla ni captura simulada.
+        Esta API no persiste plantillas. Servicio deshabilitado devuelve 503.
+      security: *adminSecurity
       tags:
         - Biométrico y Control de Asistencia
       requestBody:
@@ -731,16 +1150,29 @@ paths:
                   example: "V-12345678"
                 finger:
                   type: integer
+                  minimum: 0
+                  maximum: 9
                   example: 1
       responses:
-        '200':
-          description: Plantilla biométrica enrolada exitosamente
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
         '400':
-          description: ID de empleado ausente o inválido
+          $ref: '#/components/responses/BiometricFailure'
+        '501':
+          $ref: '#/components/responses/BiometricFailure'
+        '503':
+          $ref: '#/components/responses/BiometricFailure'
 
   /biometric/logs:
     get:
       summary: Consultar Registros de Asistencia
+      description: >
+        También /api/v1/biometric/logs. USB con Push habilitado consulta solo
+        memoria Push; no lee hardware USB. En red exige una lectura TCP exitosa;
+        nunca devuelve caché como éxito tras un fallo. Transferencias ZK por
+        bloques no implementadas (501). Memoria volátil, no persistida.
       tags:
         - Biométrico y Control de Asistencia
       parameters:
@@ -753,10 +1185,48 @@ paths:
       responses:
         '200':
           description: Lista de marcajes de asistencia recuperados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success]
+                  source:
+                    type: string
+                    enum: [push_memory, hardware_and_push_memory]
+                  persistent:
+                    type: boolean
+                    enum: [false]
+                  is_simulated:
+                    type: boolean
+                    enum: [false]
+                  count:
+                    type: integer
+                  records:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          $ref: '#/components/responses/BiometricFailure'
+        '500':
+          $ref: '#/components/responses/BiometricFailure'
+        '501':
+          $ref: '#/components/responses/BiometricFailure'
+        '503':
+          $ref: '#/components/responses/BiometricFailure'
+        '504':
+          $ref: '#/components/responses/BiometricFailure'
 
   /biometric/push:
     post:
       summary: Receptor de Marcajes Push (ADMS y JSON)
+      description: >
+        También /api/v1/biometric/push e /iclock/cdata. Requiere enabled y
+        push_enabled. Almacena marcajes solo en memoria, no verifica huellas.
+        JSON admite objeto o array; fechas RFC3339. ADMS usa tabuladores y
+        fechas interpretadas como UTC. Lotes inválidos se rechazan sin ingestión.
       tags:
         - Biométrico y Control de Asistencia
       requestBody:
@@ -772,12 +1242,302 @@ paths:
                 type: object
       responses:
         '200':
-          description: Marcajes procesados exitosamente
+          description: Marcajes válidos aceptados en memoria (volátil, no persistida)
+        '400':
+          $ref: '#/components/responses/BiometricFailure'
+        '503':
+          $ref: '#/components/responses/BiometricFailure'
 
 components:
+  securitySchemes:
+    OperationalBearer:
+      type: http
+      scheme: bearer
+      description: server.api_key. Obligatoria en rutas operativas fuera de loopback o si está configurada en loopback. La alternativa sin credencial solo aplica a loopback sin api_key; OpenAPI no expresa esta condición de despliegue. No sustituye server.admin_key.
+    OperationalApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Alternativa a Authorization para server.api_key; mismas condiciones de bind. No concede administración.
+    AdminSession:
+      type: apiKey
+      in: cookie
+      name: omnibridge_admin_session
+    AdminBearer:
+      type: http
+      scheme: bearer
+      description: Clave server.admin_key independiente; solo bind loopback.
+    AdminApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Clave server.admin_key, no la clave operativa del POS.
+  responses:
+    PrintDispatchFailure:
+      description: Fallo de preparación o despacho al backend de impresión; no se confirma salida física ni se reenvía automáticamente.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RequestFailure:
+      description: Rechazo de autenticación, Origin, límites DEMO o extractor HTTP. Puede devolver JSON de aplicación o texto plano; verificar HTTP y no continuar el flujo.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+        text/plain:
+          schema:
+            type: string
+    InvalidPrintRequest:
+      description: JSON malformado, tipo incorrecto o contenido requerido ausente; no se despacha la operación.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+        text/plain:
+          schema:
+            type: string
+    DispatchBusy:
+      description: Capacidad de 4 workers agotada. Este despacho no fue enviado ni encolado; sin reintento automático.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message]
+            properties:
+              status:
+                type: string
+                enum: [error]
+              message:
+                type: string
+    BiometricFailure:
+      description: >
+        Error explícito biométrico. 400 entrada inválida; 501 operación no
+        implementada; 503 deshabilitado o no disponible; 504 timeout;
+        500 fallo de protocolo o E/S. No devuelve plantillas ni éxito sintético.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message]
+            properties:
+              status:
+                type: string
+                enum: [error]
+              message:
+                type: string
+    RawDispatchFailure:
+      description: El cliente de impresión RAW rechazó el despacho, terminó por señal o no pudo ejecutarse. No se reenvía automáticamente ni se simula.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message]
+            properties:
+              status:
+                type: string
+                enum: [error]
+              message:
+                type: string
+    RawDispatchTimeout:
+      description: Timeout del despacho de impresión o gaveta. Aceptación no confirmada; revisar la cola antes de reintentar para evitar duplicados.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message]
+            properties:
+              status:
+                type: string
+                enum: [error]
+              message:
+                type: string
+    AdminUnauthorized:
+      description: Sesión/clave administrativa ausente, inválida, expirada o administración sin configurar.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message]
+            properties:
+              status:
+                type: string
+                enum: [error]
+              message:
+                type: string
+    AdminForbidden:
+      description: Bind no loopback, Origin externo o escritura con cookie/login sin Origin local del puerto principal.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message]
+            properties:
+              status:
+                type: string
+                enum: [error]
+              message:
+                type: string
   schemas:
+    ErrorResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+          enum: [error]
+        message:
+          type: string
+      description: Errores de la aplicación y autenticación. Rechazos de extractores Axum (por ejemplo JSON de etiquetas/documentos o query de pesada inválidos) pueden devolver texto plano con HTTP 400/413/415/422; el cliente debe comprobar HTTP antes de interpretar el cuerpo.
+    PrinterTestPageResponse:
+      type: object
+      required: [ok, status, message, printer_used, test_type]
+      properties:
+        ok:
+          type: boolean
+        status:
+          type: string
+        message:
+          type: string
+        printer_used:
+          type: string
+        test_type:
+          type: string
+    ConfigUpdate:
+      type: object
+      description: Todos los campos son opcionales. Omitir conserva el valor; null elimina overrides solo en scale_dtr, scale_rts, biometric_clock_ip y los dos identificadores USB. Listas vacias eliminan entradas. Credenciales solo en disco. Limites administrativos no implican homologacion del dispositivo. sumatra_args se guarda por compatibilidad; el motor usa argumentos internos seguros, no ejecuta esta plantilla.
+      properties:
+        scale_port:
+          type: string
+        scale_baud_rate:
+          type: integer
+          minimum: 1
+          maximum: 4000000
+        scale_timeout_ms:
+          type: integer
+          minimum: 1
+          maximum: 60000
+        scale_serial_format:
+          type: string
+          enum: [8N1, 7E1]
+        scale_poll_command:
+          type: string
+          enum: [w_then_p, w]
+        scale_dtr:
+          type: boolean
+          nullable: true
+        scale_rts:
+          type: boolean
+          nullable: true
+        scale_simulation_mode:
+          type: boolean
+        default_printer:
+          type: string
+        default_label_printer:
+          type: string
+        default_matrix_printer:
+          type: string
+        default_document_printer:
+          type: string
+        cors_origins:
+          type: array
+          items:
+            type: string
+        allowed_download_origins:
+          type: array
+          items:
+            type: string
+        server_host:
+          type: string
+          description: IP literal. Un bind no loopback exige api_key previamente configurada y bloquea la administracion tras reiniciar.
+        server_port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        server_legacy_print_port:
+          type: integer
+          minimum: 0
+          maximum: 65535
+          description: 0 deshabilita. Puertos habilitados deben ser distintos.
+        server_legacy_label_port:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        sumatra_path:
+          type: string
+          maxLength: 4096
+        sumatra_args:
+          type: string
+          maxLength: 4096
+        extra_pos_keywords:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 128
+        extra_label_keywords:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 128
+        extra_matrix_keywords:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 128
+        extra_document_keywords:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 128
+        max_download_size_mb:
+          type: integer
+          minimum: 1
+          maximum: 100
+        print_timeout_sec:
+          type: integer
+          minimum: 1
+          maximum: 300
+        allow_private_network_downloads:
+          type: boolean
+          description: Amplia acceso a red privada; no elimina bloqueos incondicionales de loopback/metadata.
+        biometric_enabled:
+          type: boolean
+        biometric_device_type:
+          type: string
+          enum: [network_clock, usb_desktop]
+        biometric_clock_ip:
+          type: string
+          nullable: true
+          description: IP literal o null para eliminar; obligatorio en reloj habilitado. Configuracion sanitizada representa ausencia como cadena vacia para mantenerla en TOML sin restaurar el default.
+        biometric_clock_port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        biometric_usb_vendor_id:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 65535
+          description: Decimal. Ambos VID/PID deben estar configurados o ambos ausentes.
+        biometric_usb_product_id:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 65535
+        biometric_push_enabled:
+          type: boolean
+        biometric_pull_interval_seconds:
+          type: integer
+          minimum: 1
+          maximum: 86400
+      additionalProperties: false
     WeightResponse:
       type: object
+      required: [peso, weight, peso_leido, puerto, is_simulated, unit, is_stable]
       properties:
         peso:
           type: number
@@ -810,9 +1570,13 @@ components:
           type: boolean
           description: Solo es true para simulación configurable; lecturas físicas son false hasta validar estado estable por protocolo/modelo.
           example: false
+        license:
+          type: string
+          description: Plan de licencia de la instancia.
 
     PrintResponse:
       type: object
+      required: [status, message]
       properties:
         status:
           type: string
@@ -827,6 +1591,7 @@ components:
 
     DrawerResponse:
       type: object
+      required: [ok, status, message, is_simulated]
       properties:
         ok:
           type: boolean
@@ -841,6 +1606,9 @@ components:
           type: string
           nullable: true
           example: "POS-80"
+        is_simulated:
+          type: boolean
+          description: true indica simulación, no apertura física.
 
     LabelPrintRequest:
       type: object
@@ -868,7 +1636,7 @@ components:
           example: true
         mode:
           type: string
-          description: Mecanismo de despacho empleado (DirectUSB, Spooler, UnixRaw o Simulation).
+          description: Mecanismo de despacho empleado (DirectUSB, Spooler, UnixRaw o simulation).
           example: "DirectUSB"
         message:
           type: string
@@ -879,9 +1647,16 @@ components:
 
     MatrixPrintRequest:
       type: object
-      required:
-        - text
+      anyOf:
+        - required: [content]
+        - required: [text]
+        - required: [commands]
+      description: Prioridad content, text, commands. Al menos un contenido no nulo; sin contenido devuelve HTTP 400.
       properties:
+        content:
+          type: string
+        commands:
+          type: string
         text:
           type: string
           description: Texto plano o comandos ESC/P a enviar en modo RAW a la impresora de matriz.
@@ -892,6 +1667,7 @@ components:
           example: "Generic / Text Only"
         form_feed:
           type: boolean
+          default: true
           description: Avanza la hoja al final mediante caracter ASCII Form Feed (\x0c).
           example: true
 

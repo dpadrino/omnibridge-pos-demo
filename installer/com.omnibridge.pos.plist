@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.omnibridge.pos</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/pos-peripherals-agent</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Library/Application Support/OmniBridgePOS</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Library/Logs/OmniBridgePOS/agent.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Library/Logs/OmniBridgePOS/agent_error.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>RUST_LOG</key>
+        <string>info,pos_peripherals_agent=info</string>
+    </dict>
+</dict>
+</plist>

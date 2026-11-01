@@ -24,11 +24,7 @@ if [ ! -f "config.toml" ]; then
 fi
 
 if [ -f "./pos-peripherals-agent" ]; then
-    chmod +x ./pos-peripherals-agent 2>/dev/null || true
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        xattr -d com.apple.quarantine ./pos-peripherals-agent 2>/dev/null || true
-        xattr -cr . 2>/dev/null || true
-    fi
+    chmod +x ./pos-peripherals-agent
     echo "Iniciando binario nativo OmniBridge POS..."
     exec ./pos-peripherals-agent
 elif command -v cargo >/dev/null 2>&1; then

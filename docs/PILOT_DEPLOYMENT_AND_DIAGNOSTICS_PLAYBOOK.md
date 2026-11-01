@@ -6,6 +6,85 @@
 
 ---
 
+## Verificación del sprint sin periféricos físicos
+
+En desarrollo sobre macOS, ejecutar desde la raíz del agente:
+
+```sh
+cargo test --offline --locked --lib routes::weight::tests
+cargo test --offline --locked --test unix_raw_print_test
+cargo test --offline --locked --test resilience_concurrency_test
+cargo test --offline --locked --lib routes::print::resilience_tests
+cargo test --offline --locked --test consumer_api_contract_test
+ruby tests/openapi_contract_test.rb
+node --test tests/service_installation_test.cjs
+node --test ../omnibridge-pos-demo/scripts/consumer_contract.test.mjs
+```
+
+El comando Node requiere la demo hermana junto al agente; sus pruebas también
+pueden ejecutarse desde la raíz de la demo con
+`node --test scripts/consumer_contract.test.mjs`.
+
+El gate OpenAPI usa Ruby/Psych/Minitest y comprueba referencias JSON Pointer,
+claves YAML duplicadas y paridad de las rutas/métodos definidos en el router.
+Las pruebas del consumidor verifican rechazo de JSON inválido antes de admisión,
+alias de contenido y formatos válidos sin sustituir una prueba física.
+
+El gate de instaladores usa directorios temporales y comandos de gestor/HTTP
+falsos: prueba preservación de datos, parada antes de reemplazo, recuperación,
+precondiciones, límite de diez consultas y diagnóstico sin operaciones físicas.
+No instala servicios en el equipo ni certifica instalación nativa en ningún SO.
+PowerShell e Inno Setup requieren validación en Windows; el CI incorpora parser
+PowerShell y compilación Inno Setup, no la ejecución del instalador ni servicios.
+
+Antes de actualizar, extraer el paquete fuera del destino, verificar integridad
+y seguir la [guía de actualización y recuperación](DEPLOYMENT_GUIDE.md#34-actualización-controlada-y-diagnóstico-sin-periféricos).
+El diagnóstico `scripts/diagnose_service.sh 8989` o
+`scripts/diagnose_service.ps1 -Port 8989` solo consulta gestor y liveness pública.
+No usar una respuesta HTTP exitosa como evidencia de impresión o pesada.
+
+| Capa | Evidencia automatizada | Lo que no demuestra |
+| :--- | :--- | :--- |
+| Báscula | HTTP real en loopback → autenticación Bearer/CORS → rutas `/peso`, `/weight`, `/api/v1/scale/weight` → apertura con `serialport` → petición `W\r\n` → tramas fragmentadas y lecturas sucesivas, incluido cero. Pruebas existentes cubren timeout, bloqueo y trama incompleta. | Compatibilidad eléctrica, baud rate físico, 7E1, DTR/RTS, driver USB o modelo; en PTY macOS se usa baud rate 0. |
+| Impresión RAW y gaveta | Handler → backend de procesos del SO → clientes CUPS de prueba aislados. Se verifican destino, argumentos RAW, bytes exactos, Form Feed explícito/por defecto/desactivado, pulsos de gaveta y ticket por HTTP real. Se comprueban aceptación, rechazo, permisos, ausencia y timeout sin falso éxito. | Spooler CUPS real, impresión en papel, impresión PDF, apertura física o Winspool. Los ejecutables de prueba no sustituyen estas validaciones. |
+| Consumidor demo | Se ejecuta el ejemplo publicado de JavaScript con respuestas controladas: rutas, métodos, cuerpo, Bearer opcional, peso cero y detención ante error o simulación. | Un navegador real con PNA/políticas de contenido mixto o un POS externo. |
+
+`is_simulated: false` en un ensayo PTY identifica el camino de producción utilizado,
+no convierte el puerto virtual en evidencia de hardware físico. Las pruebas no
+leen configuración privada ni envían trabajos a impresoras reales.
+
+Antes de aceptar comercialmente la estación actualizada, repetir los pasos HIL de
+esta guía desde el POS/navegador real con simulación desactivada y registrar:
+commit/binario, SO, drivers, modelos, configuración no secreta, código HTTP,
+payload, latencia y resultado físico. Verificar ticket PDF y RAW, etiqueta,
+matriz y documento según los servicios que use el cliente; comprobar pesada con
+cero y masa conocida, desconexión/reconexión y rechazo sin lecturas inventadas.
+Una aceptación del spooler no garantiza salida en papel. No reenviar
+automáticamente impresiones fallidas o ambiguas: pueden duplicar documentos.
+
+La aceptación física y multiplataforma sigue pendiente cuando no hay equipos
+disponibles. Si aparece una regresión, corregirla y repetir el caso exitoso y el
+fallido antes de avanzar; no revertir mejoras por precaución sin evidencia.
+
+### Saturación y recuperación del despacho
+
+El límite compartido es de 4 workers por instancia, no una cola persistente ni un
+bloqueo por impresora. Incluye impresión, gaveta, páginas de prueba, limpieza y
+simulaciones; no consume el bloqueo serial de pesada. HTTP 503 por capacidad
+agotada indica que **ese despacho** no se envió ni se encoló; mostrar el error al
+operador. HTTP 504 es distinto: la aceptación puede ser ambigua. No reenviar
+automáticamente. Un worker conserva su cupo y PDF/TXT temporal aunque expire o
+se cancele la petición HTTP. El cupo se libera al terminar, fallar o entrar en
+pánico; los tests verifican rechazo sin ejecución y recuperación posterior.
+La preparación de archivos/descargas y controles DEMO ocurren antes de la
+admisión. Este mecanismo no limita la cola del spooler ni certifica salida física.
+
+En pesada, una lectura que agota el tiempo esperando el puerto ocupado no
+inicia una operación serial tardía. Una prueba verifica ese rechazo y que la
+siguiente lectura funciona al liberar el puerto; no demuestra reconexión física.
+
+---
+
 ## 1. Preparación Previa al Despliegue en Tienda
 
 Antes de acudir a la sucursal o conectarse remotamente a la caja:
@@ -19,7 +98,7 @@ Antes de acudir a la sucursal o conectarse remotamente a la caja:
 ## 2. Instalación en Windows (Estaciones de Caja POS)
 
 ### 2.1. Instalación Mediante el Asistente Gráfico
-1. Ejecutar como Administrador `OmniBridgePOS_Setup_v1.0.0.exe`.
+1. Ejecutar como Administrador el instalador de la versión y arquitectura verificadas.
 2. Antes de ejecutar el instalador, verificar su firma y checksum con el canal de publicación aprobado. Si SmartScreen muestra una advertencia o el artefacto no está firmado/verificado, detenerse y escalarlo; no omitir el control por defecto.
 3. Aceptar el acuerdo de licencia comercial EULA.
 4. Mantener la ruta de instalación predeterminada (`C:\Program Files\OmniBridgePOS` o `C:\Archivos de programa\OmniBridgePOS`).
@@ -28,12 +107,12 @@ Antes de acudir a la sucursal o conectarse remotamente a la caja:
    - Configura el servicio para arranque automático (`SERVICE_AUTO_START`).
    - Instala en **Modo A** (estándar): `host = "127.0.0.1"`, sin `api_key` y **sin reglas de Firewall entrantes**. Al desinstalar elimina reglas `OmniBridge POS 8989/8002/8003` que hubieran creado instaladores anteriores.
    - No exponer el agente a la LAN (Modo B) sin configurar API key, revisar CORS/orígenes y crear una regla de Firewall restringida a la subred; una regla de Firewall no reemplaza esos controles.
-   - Inicia el servicio inmediatamente y abre el Panel de Control en el navegador (`http://localhost:8989/`).
+   - Verifica gestor + HTTP antes de anunciar instalación correcta. No sustituye las pruebas físicas. Ante error, seguir los límites de recuperación de la guía.
 
 ### 2.2. Instalación Desatendida (Masiva por Script / Terminal)
 Para instalar en múltiples cajas de forma silenciosa sin intervención visual:
 ```cmd
-OmniBridgePOS_Setup_v1.0.0.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+OmniBridgePOS_Setup_v1.2.0.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /AGENTPORT=8989
 ```
 
 ---
@@ -78,13 +157,16 @@ Para probar el flujo de software sin afirmar compatibilidad física, activar `si
 ## 4. Árbol de Decisión y Contingencia ante Incidencias Comunes
 
 ### Incidencia A: "La báscula no lee el peso o retorna HTTP 503"
-1. **Verificar cable USB físico:** Confirmar que el cable USB o adaptador RS-232 esté firmemente conectado.
+1. **Verificar cable USB físico:** Confirmar que el cable USB o adaptador RS-232 esté firmemente conectado (preferir puertos USB traseros soldados a la placa base).
 2. **Revisar el Administrador de Dispositivos de Windows:**
    - Abrir `devmgmt.msc` ➔ Sección *"Puertos (COM y LPT)"*.
    - Si aparece un dispositivo con triángulo amarillo (falta de driver CH340 o Prolific), instalar el driver del fabricante del adaptador.
-3. **Auto-detección (`port = "auto"`):**
+   - **Alerta de Driver CH340 (WCH v3.9.2024.9):** Si el puerto arroja *"Uno de los dispositivos conectados al sistema no funciona"* (`ERROR_GEN_FAILURE`), revertir el controlador a la versión 3.5 (2019) o 3.4 (2014) en las propiedades del dispositivo en `devmgmt.msc`.
+3. **Modo de Transmisión Continua de la Báscula:**
+   - Si el puerto abre pero no lee peso, la báscula está en silencio (modo manual o impresora `PRN`). Configurar el cabezal en modo Continuo (`PC-POS`, `CONT` o `STREAM`) a 9600 8N1. Colocar peso sobre el plato (al menos 1 kg) para forzar la emisión de tramas continuas (`ST,GS,+   X.XXkg`).
+4. **Auto-detección (`port = "auto"`):**
    - OmniBridge POS escanea los puertos COM automáticamente. Si el puerto cambió de `COM3` a `COM4`, el agente se enlaza solo en el siguiente ciclo.
-4. **Prueba simulada de software:**
+5. **Prueba simulada de software:**
    - Solo con `simulation_mode = true`, probar `http://localhost:8989/peso?simulate=true`. Esta respuesta no valida báscula, driver, protocolo ni latencia física. En modo producción, parámetros de simulación/override se rechazan con HTTP 403.
 
 ---

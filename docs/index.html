@@ -533,7 +533,8 @@
     </div>
 
     <!-- SECTION: CODE INTEGRATION -->
-    <div class="section-title">Integración en 3 Líneas de Código (Frontend JavaScript)</div>
+    <div class="section-title">Integración con comprobación de resultados (Frontend JavaScript)</div>
+    <p>Autoriza el origen exacto del POS en CORS. En instalaciones con API key, usa la clave operativa mediante <code>Authorization: Bearer</code>, nunca la clave administrativa. No incrustes claves reales en páginas públicas. Una respuesta aceptada por el spooler no confirma impresión ni apertura física; un error debe interrumpir el flujo, no convertirse en éxito.</p>
     <div class="code-window">
       <div class="window-header">
         <div class="dot dot-red"></div>
@@ -541,18 +542,48 @@
         <div class="dot dot-green"></div>
         <span class="window-title">checkout.js — Integración directa con OmniBridge POS</span>
       </div>
-      <pre><code><span class="token-comment">// 1. Leer peso en tiempo real de la báscula serial:</span>
-<span class="token-keyword">const</span> { peso } = <span class="token-keyword">await</span> (<span class="token-keyword">await</span> <span class="token-func">fetch</span>(<span class="token-str">'http://localhost:8989/peso'</span>)).<span class="token-func">json</span>();
+      <pre><code id="pos-integration-example">const baseUrl = 'http://127.0.0.1:8989';
+const apiKey = ''; // Obtener de la configuración segura de la estación, si aplica.
 
-<span class="token-comment">// 2. Disparar apertura eléctrica de la gaveta de dinero:</span>
-<span class="token-keyword">await</span> <span class="token-func">fetch</span>(<span class="token-str">'http://localhost:8989/drawer'</span>, { method: <span class="token-str">'POST'</span> });
+async function callAgent(path, options = {}) {
+  const headers = new Headers(options.headers);
+  if (apiKey) headers.set('Authorization', `Bearer ${apiKey}`);
+  const response = await fetch(`${baseUrl}${path}`, { ...options, headers });
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(`OmniBridge: HTTP ${response.status}, respuesta no JSON; no continuar ni reenviar automáticamente`);
+  }
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    throw new Error(`OmniBridge: HTTP ${response.status}, contrato de respuesta inválido`);
+  }
+  if (!response.ok || result.status === 'error' || result.ok === false) {
+    throw new Error(result.message || `OmniBridge: HTTP ${response.status}`);
+  }
+  if (result.is_simulated === true || result.mode === 'simulation') {
+    throw new Error('Resultado simulado: no confirma una operación física');
+  }
+  return result;
+}
 
-<span class="token-comment">// 3. Despachar ticket térmico sin ventana emergente de Chrome (sub-segundo):</span>
-<span class="token-keyword">await</span> <span class="token-func">fetch</span>(<span class="token-str">'http://localhost:8989/ticket'</span>, {
+// Conectar los errores al aviso del POS; no continuar la venta como si hubiera éxito.
+const reading = await callAgent('/api/v1/scale/weight');
+if (!Number.isFinite(reading.peso) || reading.peso &lt; 0 || reading.is_simulated !== false) {
+  throw new Error('Lectura de peso inválida o sin confirmación de modo físico');
+}
+const { peso } = reading;
+const drawer = await callAgent('/api/v1/drawer/open', { method: 'POST' });
+if (drawer.ok !== true || drawer.is_simulated !== false) {
+  throw new Error('La gaveta no confirmó el despacho físico');
+}
+const ticket = await callAgent('/api/v1/ticket', {
   method: <span class="token-str">'POST'</span>,
   headers: { <span class="token-str">'Content-Type'</span>: <span class="token-str">'application/json'</span> },
   body: JSON.<span class="token-func">stringify</span>({ content: <span class="token-str">"VENTA #101\nTotal: $25.00\nGRACIAS POR SU COMPRA\n"</span> })
-});</code></pre>
+});
+if (ticket.status !== 'ok') throw new Error('El ticket no confirmó su despacho');
+// Despacho aceptado no garantiza papel ni movimiento de gaveta; 504 es ambiguo.</code></pre>
     </div>
 
     <!-- SECTION: OS INSTALLATION INSTRUCTIONS -->
@@ -583,17 +614,17 @@
         </div>
         <ol style="margin-left: 20px; color: #CBD5E1; font-size: 0.95rem; line-height: 1.8;">
           <li>Descarga el paquete oficial <strong><code>omnibridge-pos-windows-x86_64.zip</code></strong> desde <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" style="color: #38BDF8;">GitHub Releases</a>.</li>
-          <li>Descomprime la carpeta completa directamente en <code>C:\PosAgent</code>.</li>
+          <li>Verifica el checksum y descomprime el paquete completo en <code>C:\OmniBridgePackage</code>, separado de la instalación <code>C:\PosAgent</code>. No sobrescribas una instalación en ejecución.</li>
           <li>Abre <strong>PowerShell como Administrador</strong> y ejecuta el script de instalación en 1 clic:
             <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
-              cd C:\PosAgent<br>
-              powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_service.ps1
+              cd C:\OmniBridgePackage<br>
+              powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_service.ps1 -InstallDir C:\PosAgent -Port 8989
             </div>
           </li>
-          <li>¡Listo! El agente se instala como Servicio de Windows (arranque automático al encender el PC). Abre <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a> para asignar periféricos.</li>
+          <li>El instalador comprueba servicio y HTTP antes de anunciar éxito. Ejecuta <code>.\scripts\diagnose_service.ps1 -Port 8989</code> y valida impresión, pesada y gaveta desde el POS; el arranque no certifica los periféricos. Abre <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a> para revisar configuración.</li>
         </ol>
         <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
-          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md#31-producci%C3%B3n-en-windows-pcs-facturadoras-de-tienda" target="_blank" style="font-size: 0.9rem; color: #38BDF8; text-decoration: underline; font-weight: 600;">
+          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md" target="_blank" style="font-size: 0.9rem; color: #38BDF8; text-decoration: underline; font-weight: 600;">
             📘 Abrir Manual Técnico de Windows (NSSM, comandos manuales y spooler) &rarr;
           </a>
         </div>
@@ -607,22 +638,23 @@
         </div>
         <ol style="margin-left: 20px; color: #CBD5E1; font-size: 0.95rem; line-height: 1.8;">
           <li>Descarga el paquete <strong><code>omnibridge-pos-linux-x86_64.tar.gz</code></strong> desde <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" style="color: #38BDF8;">GitHub Releases</a>.</li>
-          <li>Descomprime y otorga permisos de acceso al puerto serial COM/USB:
+          <li>Verifica el checksum y descomprime fuera del directorio instalado. El servicio systemd requiere que el grupo <code>dialout</code> exista; consulta los permisos de tu distribución:
             <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
               tar -xzf omnibridge-pos-linux-x86_64.tar.gz<br>
               cd omnibridge-pos-linux-x86_64<br>
-              sudo usermod -aG dialout $USER
+              getent group dialout
             </div>
           </li>
           <li>Ejecuta el script de inicio o regístralo como servicio <strong>systemd</strong>:
             <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
-              ./scripts/run_macos_linux.sh
+              sudo bash scripts/install_linux_service.sh 8989<br>
+              sudo bash scripts/diagnose_service.sh 8989
             </div>
           </li>
           <li>Abre tu navegador en <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a> para verificar el estado de los periféricos.</li>
         </ol>
         <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
-          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md#32-producci%C3%B3n-en-linux-servidor-o-caja-con-systemd" target="_blank" style="font-size: 0.9rem; color: #34D399; text-decoration: underline; font-weight: 600;">
+          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md" target="_blank" style="font-size: 0.9rem; color: #34D399; text-decoration: underline; font-weight: 600;">
             📘 Abrir Manual Técnico de Linux (Servicio systemd y permisos udev) &rarr;
           </a>
         </div>
@@ -636,11 +668,10 @@
         </div>
         <ol style="margin-left: 20px; color: #CBD5E1; font-size: 0.95rem; line-height: 1.8;">
           <li>Descarga el paquete <strong><code>omnibridge-pos-macos-arm64.tar.gz</code></strong> desde <a href="https://github.com/dpadrino/omnibridge-pos-demo/releases" target="_blank" style="color: #38BDF8;">GitHub Releases</a>.</li>
-          <li>Descomprime y retira la marca de cuarentena de Apple Gatekeeper:
+          <li>Verifica el checksum y descomprime fuera del directorio instalado. Los scripts no eliminan la cuarentena: si Gatekeeper bloquea el binario, detente y revisa procedencia/firma y autorización con el administrador:
             <div style="background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 12px 16px; margin: 10px 0; font-family: var(--font-mono); font-size: 0.88rem; color: #A7F3D0;">
               tar -xzf omnibridge-pos-macos-arm64.tar.gz<br>
               cd omnibridge-pos-macos-arm64<br>
-              xattr -cr .<br>
               chmod +x pos-peripherals-agent scripts/run_macos_linux.sh
             </div>
           </li>
@@ -652,7 +683,7 @@
           <li>Abre tu navegador en <a href="http://127.0.0.1:8989/" target="_blank" style="color: #38BDF8;">http://127.0.0.1:8989/</a>.</li>
         </ol>
         <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1);">
-          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md#22-en-macos-desarrollo-y-paquete-precompilado" target="_blank" style="font-size: 0.9rem; color: #C084FC; text-decoration: underline; font-weight: 600;">
+          <a href="https://github.com/dpadrino/omnibridge-pos-demo/blob/main/docs/DEPLOYMENT_GUIDE.md" target="_blank" style="font-size: 0.9rem; color: #C084FC; text-decoration: underline; font-weight: 600;">
             📘 Abrir Manual Técnico de macOS (Launchd daemon y adaptadores USB) &rarr;
           </a>
         </div>

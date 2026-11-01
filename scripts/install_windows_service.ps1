@@ -1,139 +1,123 @@
-# OmniBridge POS - Instalador Automatizado de Servicio de Windows (NSSM)
-# Requiere ejecucion en PowerShell como Administrador
-
+# Install/update NSSM without replacing local configuration or licensing data.
 param(
-    [string]$InstallDir = "C:\PosAgent"
+    [string]$InstallDir = "C:\PosAgent",
+    [ValidateRange(1, 65535)][int]$Port = 8989
 )
-
 $ErrorActionPreference = "Stop"
-
-Write-Host "===========================================================" -ForegroundColor Cyan
-Write-Host "  OmniBridge POS - Instalador de Servicio de Windows       " -ForegroundColor Cyan
-Write-Host "===========================================================" -ForegroundColor Cyan
-
-# 1. Verificar privilegios de Administrador
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Error "ERROR: Este script requiere privilegios de Administrador. Haga clic derecho en PowerShell y elija 'Ejecutar como Administrador'."
-    exit 1
-}
-
-$CurrentDir = (Get-Location).Path
-
-# 2. Determinar directorio de instalacion
-if (-not (Test-Path $InstallDir)) {
-    Write-Host "[1/5] Creando directorio de instalacion: $InstallDir..." -ForegroundColor Yellow
-    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-} else {
-    Write-Host "[1/5] Directorio de destino verificado: $InstallDir" -ForegroundColor Green
-}
-
-# 3. Copiar binario y archivos si se ejecuta desde otra carpeta (ej. Desktop o instalador extraido)
-$CurrentExe = Join-Path $CurrentDir "pos-peripherals-agent.exe"
+if (-not $isAdmin) { throw "Run PowerShell as Administrator." }
+$PackageDir = Split-Path $PSScriptRoot -Parent
+$InstallDir = [IO.Path]::GetFullPath($InstallDir)
+$SourceExe = Join-Path $PackageDir "pos-peripherals-agent.exe"
 $TargetExe = Join-Path $InstallDir "pos-peripherals-agent.exe"
-
-if ((Test-Path $CurrentExe) -and ($CurrentDir -ne (Get-Item $InstallDir).FullName)) {
-    Write-Host "[2/5] Copiando archivos a $InstallDir..." -ForegroundColor Yellow
-    Copy-Item $CurrentExe $TargetExe -Force
-    if (Test-Path (Join-Path $CurrentDir "config.toml")) {
-        Copy-Item (Join-Path $CurrentDir "config.toml") $InstallDir -Force
-    } elseif (Test-Path (Join-Path $CurrentDir "config.example.toml")) {
-        Copy-Item (Join-Path $CurrentDir "config.example.toml") (Join-Path $InstallDir "config.toml") -Force
-    }
-    if (Test-Path (Join-Path $CurrentDir "license.key")) {
-        Copy-Item (Join-Path $CurrentDir "license.key") $InstallDir -Force
-    }
-} else {
-    Write-Host "[2/5] Verificando archivos de ejecucion en $InstallDir..." -ForegroundColor Green
-    if (-not (Test-Path (Join-Path $InstallDir "config.toml"))) {
-        if (Test-Path (Join-Path $InstallDir "config.example.toml")) {
-            Copy-Item (Join-Path $InstallDir "config.example.toml") (Join-Path $InstallDir "config.toml") -Force
-        }
-    }
-}
-
-if (-not (Test-Path $TargetExe)) {
-    Write-Error "ERROR: No se encontro 'pos-peripherals-agent.exe' en $InstallDir"
-    exit 1
-}
-
-# Asegurar existencia de config.toml
 $TargetConfig = Join-Path $InstallDir "config.toml"
-if (-not (Test-Path $TargetConfig)) {
-    if (Test-Path (Join-Path $CurrentDir "config.toml")) {
-        Copy-Item (Join-Path $CurrentDir "config.toml") $TargetConfig -Force
-    } elseif (Test-Path (Join-Path $CurrentDir "config.example.toml")) {
-        Copy-Item (Join-Path $CurrentDir "config.example.toml") $TargetConfig -Force
-    } elseif (Test-Path (Join-Path $InstallDir "config.example.toml")) {
-        Copy-Item (Join-Path $InstallDir "config.example.toml") $TargetConfig -Force
-    }
+$SourceConfig = Join-Path $PackageDir "config.toml"
+if (-not (Test-Path $SourceConfig -PathType Leaf)) { $SourceConfig = Join-Path $PackageDir "config.example.toml" }
+$SourceTools = Join-Path $PackageDir "tools"
+if (-not (Test-Path (Join-Path $SourceTools "nssm.exe") -PathType Leaf)) {
+    $SourceTools = Join-Path $PackageDir "installer\tools"
 }
+if (-not (Test-Path $SourceExe -PathType Leaf)) { throw "Package binary missing: $SourceExe" }
+if (-not (Test-Path (Join-Path $SourceTools "nssm.exe") -PathType Leaf)) { throw "Package NSSM missing." }
+if (-not (Test-Path $TargetConfig -PathType Leaf) -and -not (Test-Path $SourceConfig -PathType Leaf)) { throw "Initial configuration missing." }
+if (-not (Test-Path (Join-Path $PSScriptRoot "diagnose_service.ps1") -PathType Leaf)) { throw "Diagnostic script missing." }
 
-# 4. Preparar utilidades (tools\nssm.exe y tools\SumatraPDF.exe)
-$ToolsDir = Join-Path $InstallDir "tools"
-$InstallerToolsCandidates = @(
-    (Join-Path $InstallDir "installer\tools"),
-    (Join-Path $CurrentDir "installer\tools"),
-    (Join-Path $CurrentDir "tools")
-)
-
-if (-not (Test-Path $ToolsDir)) {
-    Write-Host "[3/5] Creando carpeta de herramientas: $ToolsDir..." -ForegroundColor Yellow
-    New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
+function Invoke-Nssm([string[]]$Arguments) {
+    & $NssmExe @Arguments | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "NSSM failed: $($Arguments[0]) (exit $LASTEXITCODE)" }
 }
-
-foreach ($cand in $InstallerToolsCandidates) {
-    if (Test-Path $cand) {
-        Write-Host "      Copiando utilidades desde $cand hacia $ToolsDir..." -ForegroundColor DarkYellow
-        Copy-Item -Path "$cand\*" -Destination $ToolsDir -Force -ErrorAction SilentlyContinue
-    }
-}
-
-$NssmExe = Join-Path $ToolsDir "nssm.exe"
-if (-not (Test-Path $NssmExe)) {
-    foreach ($cand in $InstallerToolsCandidates) {
-        $nssmCand = Join-Path $cand "nssm.exe"
-        if (Test-Path $nssmCand) {
-            $NssmExe = $nssmCand
-            break
+New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+$Lock = Join-Path $InstallDir ".install-lock"
+if (Test-Path $Lock) { throw "Another install or stale .install-lock requires operator review." }
+# FileMode.CreateNew also rejects a racing installer.
+$LockHandle = [IO.File]::Open($Lock, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+$Backup = Join-Path $InstallDir ("install-backup-" + [Guid]::NewGuid().ToString("N"))
+$Stopped = $false
+$ExistingService = @()
+$NssmExe = Join-Path $SourceTools "nssm.exe"
+try {
+    $ExistingService = @(Get-Service | Where-Object Name -eq "OmniBridgePos")
+    if ($ExistingService.Count -gt 0) {
+        $PreviousDirectory = & $NssmExe get OmniBridgePos AppDirectory
+        if ($LASTEXITCODE -ne 0) { throw "Existing service is not accessible through NSSM." }
+        $PreviousApplication = & $NssmExe get OmniBridgePos Application
+        if ($LASTEXITCODE -ne 0) { throw "Cannot inspect existing service application." }
+        if ([IO.Path]::GetFullPath(($PreviousDirectory -join "").Trim()) -ne $InstallDir -or
+            [IO.Path]::GetFullPath(($PreviousApplication -join "").Trim()) -ne $TargetExe) {
+            throw "Existing service uses another directory/application; migrate it explicitly, not through this installer."
         }
     }
-}
-
-if (-not (Test-Path $NssmExe)) {
-    Write-Error "ERROR: No se encontro 'nssm.exe' en $ToolsDir ni en las carpetas de instalacion."
+    New-Item -ItemType Directory -Path $Backup | Out-Null
+    # Preserve ACLs restricting recovery files to administrators and SYSTEM.
+    & icacls.exe $Backup /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "Cannot secure backup directory." }
+    if (Test-Path $TargetExe -PathType Leaf) { Copy-Item $TargetExe (Join-Path $Backup "pos-peripherals-agent.exe") }
+    foreach ($Tool in @("nssm.exe", "SumatraPDF.exe")) {
+        $PreviousTool = Join-Path $InstallDir "tools\$Tool"
+        if (Test-Path $PreviousTool -PathType Leaf) { Copy-Item $PreviousTool (Join-Path $Backup $Tool) }
+    }
+    if ($ExistingService.Count -gt 0) {
+        Stop-Service -Name OmniBridgePos
+        (Get-Service OmniBridgePos).WaitForStatus("Stopped", [TimeSpan]::FromSeconds(30))
+    }
+    $Stopped = $true
+    if ([IO.Path]::GetFullPath($SourceExe) -ne $TargetExe) { Copy-Item $SourceExe $TargetExe -Force }
+    if (-not (Test-Path $TargetConfig -PathType Leaf)) { Copy-Item $SourceConfig $TargetConfig }
+    $TargetLicense = Join-Path $InstallDir "license.key"
+    $SourceLicense = Join-Path $PackageDir "license.key"
+    if (-not (Test-Path $TargetLicense) -and (Test-Path $SourceLicense -PathType Leaf)) { Copy-Item $SourceLicense $TargetLicense }
+    # .master_key is never copied, regenerated or removed by this installer.
+    $ToolsDir = Join-Path $InstallDir "tools"
+    New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
+    foreach ($Tool in @("nssm.exe", "SumatraPDF.exe")) {
+        $SourceTool = Join-Path $SourceTools $Tool
+        $TargetTool = Join-Path $ToolsDir $Tool
+        if ((Test-Path $SourceTool -PathType Leaf) -and ([IO.Path]::GetFullPath($SourceTool) -ne $TargetTool)) {
+            Copy-Item $SourceTool $TargetTool -Force
+        }
+    }
+    $NssmExe = Join-Path $ToolsDir "nssm.exe"
+    if ($ExistingService.Count -eq 0) { Invoke-Nssm @("install", "OmniBridgePos", $TargetExe) }
+    Invoke-Nssm @("set", "OmniBridgePos", "Application", $TargetExe)
+    Invoke-Nssm @("set", "OmniBridgePos", "AppDirectory", $InstallDir)
+    Invoke-Nssm @("set", "OmniBridgePos", "Start", "SERVICE_AUTO_START")
+    Invoke-Nssm @("set", "OmniBridgePos", "AppRestartDelay", "3000")
+    Start-Service OmniBridgePos
+    & (Join-Path $PSScriptRoot "diagnose_service.ps1") -Port $Port -WaitForStartup
+    if ($LASTEXITCODE -ne 0) { throw "Startup diagnostic failed." }
+    Write-Host "Service installed: manager running and HTTP live. Hardware not certified."
+    Write-Host "Recovery files retained at $Backup"
+} catch {
+    Write-Error -ErrorAction Continue "Installation FAILED. Recovery files: $Backup. $($_.Exception.Message)"
+    $OldExe = Join-Path $Backup "pos-peripherals-agent.exe"
+    if ($Stopped) {
+        try {
+            $Service = @(Get-Service | Where-Object Name -eq "OmniBridgePos")
+            if ($Service.Count -gt 0) {
+                Stop-Service OmniBridgePos
+                (Get-Service OmniBridgePos).WaitForStatus("Stopped", [TimeSpan]::FromSeconds(30))
+            }
+            if (Test-Path $OldExe -PathType Leaf) {
+                Copy-Item $OldExe $TargetExe -Force
+                foreach ($Tool in @("nssm.exe", "SumatraPDF.exe")) {
+                    $PreviousTool = Join-Path $Backup $Tool
+                    if (Test-Path $PreviousTool -PathType Leaf) { Copy-Item $PreviousTool (Join-Path $InstallDir "tools\$Tool") -Force }
+                }
+                if ($ExistingService.Count -gt 0) {
+                    Start-Service OmniBridgePos
+                    & (Join-Path $PSScriptRoot "diagnose_service.ps1") -Port $Port -WaitForStartup
+                    if ($LASTEXITCODE -ne 0) { throw "Previous service not live." }
+                }
+                Write-Host "Previous binary restored; installation remains FAILED."
+            } else {
+                Write-Error -ErrorAction Continue "No previous binary; failed installation left stopped."
+            }
+        } catch {
+            Write-Error -ErrorAction Continue "Rollback FAILED: $($_.Exception.Message). Restore manually from $Backup."
+        }
+    }
     exit 1
-} else {
-    Write-Host "[3/5] Herramientas verificadas (NSSM y SumatraPDF listos)." -ForegroundColor Green
+} finally {
+    $LockHandle.Dispose()
+    Remove-Item -LiteralPath $Lock
 }
-
-# 5. Detener servicio previo si ya existia
-Write-Host "[4/5] Configurando Servicio de Windows 'OmniBridgePos'..." -ForegroundColor Yellow
-$ExistingService = Get-Service -Name "OmniBridgePos" -ErrorAction SilentlyContinue
-if ($ExistingService) {
-    Write-Host "      Deteniendo instancia anterior del servicio..." -ForegroundColor DarkYellow
-    Stop-Service -Name "OmniBridgePos" -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1
-}
-
-# 6. Registrar o actualizar parametros en NSSM
-& $NssmExe install OmniBridgePos "$TargetExe" 2>$null | Out-Null
-& $NssmExe set OmniBridgePos AppDirectory "$InstallDir" | Out-Null
-& $NssmExe set OmniBridgePos Description "OmniBridge POS - Agente Universal de Perifericos (Bascula, Tickets, Etiquetas y Gaveta)" | Out-Null
-& $NssmExe set OmniBridgePos Start SERVICE_AUTO_START | Out-Null
-& $NssmExe set OmniBridgePos AppRestartDelay 3000 | Out-Null
-
-# 7. Iniciar el servicio
-Write-Host "[5/5] Iniciando servicio..." -ForegroundColor Yellow
-Start-Service -Name "OmniBridgePos"
-Start-Sleep -Seconds 2
-
-$Status = Get-Service -Name "OmniBridgePos"
-Write-Host "===========================================================" -ForegroundColor Green
-Write-Host "  SERVICIO INSTALADO Y EJECUTANDOSE CON EXITO!             " -ForegroundColor Green
-Write-Host "===========================================================" -ForegroundColor Green
-Write-Host "  Servicio        : $($Status.Name)" -ForegroundColor White
-Write-Host "  Estado          : $($Status.Status)" -ForegroundColor Green
-Write-Host "  Directorio      : $InstallDir" -ForegroundColor White
-Write-Host "  Dashboard Local : http://127.0.0.1:8989/" -ForegroundColor Cyan
-Write-Host "===========================================================" -ForegroundColor Green

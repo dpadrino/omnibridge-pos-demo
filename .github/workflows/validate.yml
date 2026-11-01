@@ -1,0 +1,39 @@
+name: Validate public integration and distribution scripts
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify published POS consumer example
+        run: node --test scripts/consumer_contract.test.mjs
+      - name: Verify Unix scripts
+        if: runner.os != 'Windows'
+        run: bash -n scripts/service_common.sh scripts/diagnose_service.sh scripts/install_linux_service.sh scripts/install_macos_service.sh scripts/run_macos_linux.sh
+      - name: Verify PowerShell scripts
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          foreach ($path in @('scripts/install_windows_service.ps1', 'scripts/diagnose_service.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $path), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) { throw ($errors | Out-String) }
+          }

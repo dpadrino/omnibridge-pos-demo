@@ -1,4 +1,8 @@
 # Configuración de pos-peripherals-agent (Agente Local POS en Rust)
+# Panel autenticado: los 35 campos no secretos son editables y requieren reinicio.
+# Tarjetas = estado activo; formulario = valores guardados. Guardar no activa cambios.
+# Claves solo manuales. Guardado reserializa TOML (no conserva comentarios).
+# No editar simultaneamente desde agentes/editores distintos.
 
 [server]
 # MODO A (ESTÁNDAR DE INSTALACIÓN): host = "127.0.0.1" y api_key = "".
@@ -7,6 +11,10 @@
 # MODO B (AVANZADO, solo red cableada y confiable): host = "0.0.0.0" (o IP de LAN) + api_key obligatoria
 #   + regla de Firewall restringida a la subred. La clave la envía un servidor/cliente nativo, nunca el navegador.
 host = "127.0.0.1"
+
+# En red, alias health/status (incluidos biometricos) requieren api_key.
+# GET /api/v1/health/live es publico: solo {"status":"ok"}, sin verificar hardware.
+# La administración (panel, config, licencias, mantenimiento, enrolamiento) solo opera en loopback.
 
 # Puerto HTTP principal unificado (por defecto 8989, centraliza Báscula, Gaveta, Tickets, Etiquetas, Matriz y Dashboard)
 port = 8989
@@ -27,6 +35,12 @@ cors_origins = []
 # tener su origen exacto en cors_origins; clientes nativos locales pueden usar loopback.
 # No incluir una clave real en el frontend web ni versionarla en el repositorio.
 api_key = ""
+# Administración bloqueada hasta configurar una clave aleatoria de 32 a 256 bytes,
+# distinta de api_key. Login local: /admin/login. Sesión HttpOnly de 30 minutos.
+# Clientes nativos administrativos: Authorization: Bearer <admin_key>.
+# No editable desde API/UI; rotar en este archivo y reiniciar (revoca sesiones).
+# Proteger config.toml y sus copias con permisos del usuario del servicio.
+admin_key = ""
 
 [scale]
 # Puerto serial donde está conectada la báscula física:
@@ -98,7 +112,8 @@ default_document_printer = "auto"
 # Ubicación predeterminada exacta en C:\PosAgent (o se auto-detecta si está en tools\ o installer\tools\)
 sumatra_path = "C:\\PosAgent\\installer\\tools\\SumatraPDF.exe"
 
-# Argumentos para SumatraPDF (modo silencioso, ajuste noscale)
+# Plantilla legacy persistida. No personaliza la ejecucion: el motor utiliza
+# argumentos internos seguros para impresion silenciosa y escalado por familia.
 sumatra_args = "-print-to {printer} -print-settings noscale -silent {file}"
 
 # Tamaño máximo permitido para descargas remotas de PDFs en megabytes (protección contra OOM)
@@ -118,7 +133,10 @@ enabled = false
 
 # Tipo de dispositivo:
 # "network_clock": Reloj checador de pared TCP/IP (protocolo ZKTeco / UDP/TCP puerto 4370)
-# "usb_desktop": Captahuellas USB de escritorio para enrolamiento de personal
+# "usb_desktop": Adaptador USB reservado, sin deteccion ni captura implementadas.
+# El enrolamiento USB/red retorna 501; no genera plantillas sinteticas.
+# USB con push_enabled permite consultar solo los marcajes Push en memoria.
+# Red: handshake TCP/UDP y lectura TCP de 40 bytes; transferencias por bloques no implementadas.
 device_type = "network_clock"
 
 # Dirección IP del reloj checador en la red local
@@ -127,7 +145,7 @@ clock_ip = "192.168.1.201"
 # Puerto de comunicación del reloj checador (por defecto 4370 para protocolo ZKTeco)
 clock_port = 4370
 
-# Identificadores USB para captahuellas de escritorio (opcional, ej. ZKTeco ZK9500 / Live20R 0x1B55:0x0120)
+# Identificadores USB reservados (configurarlos no prueba deteccion, captura ni certificacion)
 # usb_vendor_id = 6997
 # usb_product_id = 288
 
@@ -135,5 +153,5 @@ clock_port = 4370
 pull_interval_seconds = 300
 
 # Habilitar receptor de eventos Push automáticos del reloj (ADMS Push)
+# Cache volatil: los marcajes se pierden al reiniciar; persistir en el ERP.
 push_enabled = true
-

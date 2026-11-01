@@ -4,6 +4,36 @@ Esta guía detalla los pasos para instalar, compilar y ejecutar **`pos-periphera
 
 ---
 
+## Canal de evaluación y recuperación
+
+Durante el prototipo se mantiene la versión base 1.2.0. El job
+`publish-preview` de [CI](../.github/workflows/ci.yml) solo publica tras un push a
+`main` con pruebas y builds de los tres targets exitosos. No publica desde PRs
+ni ejecuciones manuales. La primera ejecución remota y sus descargas deben
+verificarse antes de afirmar que el canal está operativo.
+
+El prerelease `preview` es móvil y no es el release estable `latest`. Sus paquetes
+incluyen SHA completo en el nombre y `build-manifest.json` con versión, target,
+fecha UTC y run/intento. Verificar el `.sha256` del archivo descargado y
+`SHA256SUMS.txt` tras extraerlo. Los builds obsoletos no reemplazan el canal.
+Los tags estables `vX.Y.Z` siguen separados e inmutables.
+
+El preview anterior conserva binarios, documentos y hashes en
+`preview-archive-<release-id>`. Ante un fallo durante la promoción, el publicador
+intenta restaurar el tag y release anteriores. Si el rollback falla, CI falla
+explícitamente: no considerar el canal coherente hasta revisar el SHA del tag,
+el manifiesto y todos los activos.
+
+Para recuperar manualmente un preview, con autorización explícita: inspeccionar
+el archivo histórico completo, confirmar su SHA/hashes, devolver el nuevo release
+a un borrador con su tag `preview-build-*`, restaurar únicamente el ref `preview`
+al SHA anterior y devolver el release archivado al nombre de tag `preview`.
+Verificar nuevamente los tres paquetes y sus descargas. Nunca mover un tag
+`vX.Y.Z`, mezclar activos de builds o borrar históricos como atajo.
+Los borradores de preparaciones fallidas/obsoletas y archivos históricos se
+conservan para inspección; su limpieza requiere una decisión de retención
+autorizada.
+
 ## 1. Requisitos Previos Globales
 
 ### 1.1 Instalar Rust y Cargo
@@ -51,9 +81,8 @@ El ambiente de desarrollo permite compilar rápido con depuración, logs detalla
 2. Asignar permisos de ejecución y retirar la marca de cuarentena de macOS (Gatekeeper):
    ```bash
    chmod +x pos-peripherals-agent scripts/run_macos_linux.sh
-   xattr -cr .
    ```
-   > **Nota sobre macOS Gatekeeper:** Si macOS bloquea el binario indicando *"Apple could not verify pos-peripherals-agent is free of malware"*, ejecutar `xattr -cr .` (o `xattr -d com.apple.quarantine pos-peripherals-agent`) dentro de la carpeta desbloquea la ejecución nativa al instante. También es posible autorizarlo en *Ajustes del Sistema > Privacidad y Seguridad > Abrir de todos modos*.
+   > **Nota sobre macOS Gatekeeper:** Los scripts no eliminan la cuarentena automáticamente. Verificar primero origen, checksum y firma cuando exista. Si macOS bloquea el binario, detenerse y revisar la autorización con el administrador en *Ajustes del Sistema > Privacidad y Seguridad*. No borrar recursivamente atributos del paquete.
 3. Copiar plantilla de configuración (si no existe):
    ```bash
    cp config.example.toml config.toml
@@ -71,6 +100,22 @@ El ambiente de desarrollo permite compilar rápido con depuración, logs detalla
    ```
 
 ### 2.3 En Linux (Ubuntu / Debian / RHEL) (Desarrollo)
+
+#### Aceptación de trabajos RAW en Linux/macOS
+
+El servicio necesita un cliente CUPS (`lpr` o, si este no está instalado, `lp`) y
+una cola accesible para el usuario del servicio. Etiquetas, tickets RAW, matriz y
+gaveta comparten el mismo despacho: `lpr -l`, con alternativa `lp -o raw`
+únicamente cuando el ejecutable `lpr` no existe. La simulación solo es explícita.
+
+Un exit code exitoso confirma aceptación del despacho, no salida física del
+papel ni apertura de gaveta. Un rechazo, señal o fallo de ejecución devuelve
+HTTP 500 con `status: error`; un timeout devuelve HTTP 504. No se reenvía un
+trabajo tras rechazo o timeout. Revisar cola, disponibilidad de CUPS, nombre de
+destino y permisos desde la cuenta del servicio antes de reintentar. Un timeout
+puede ocurrir después de que la cola aceptó el trabajo y el reintento puede
+duplicarlo. El archivo temporal RAW se elimina al finalizar la operación.
+No se registran payloads RAW ni stdout/stderr del comando en esta ruta.
 1. Instalar librerías de desarrollo del sistema necesarias para compilar `serialport`:
    ```bash
    # Ubuntu / Debian
@@ -197,7 +242,7 @@ Start-Service OmniBridgePos
    *Debe responder con `Status: Running`.*
 2. **Comprobar en el navegador:**
    Abre [**http://127.0.0.1:8989/**](http://127.0.0.1:8989/).  
-   Verás el panel con tu licencia comercial PRO activa, la báscula y las impresoras listas.
+   El panel permite consultar licencia y periféricos. Verificar el servicio y realizar pruebas físicas desde el POS; abrir el panel no garantiza licencia PRO, impresión ni pesada.
 
 ---
 
@@ -245,7 +290,7 @@ sudo bash scripts/install_linux_service.sh
 sudo systemctl status omnibridge
 ```
 
-*El script crea `/opt/omnibridge`, copia el binario, instala la configuración, otorga permisos para puertos seriales (`dialout`), registra `/etc/systemd/system/omnibridge.service` y arranca el servicio.*
+*El script usa `/opt/omnibridge` y `/etc/systemd/system/omnibridge.service`. Conserva la cuenta root y el grupo `dialout`; exige que el grupo exista antes de modificar el servicio. Copia configuración inicial solo si falta y verifica gestor + HTTP antes de anunciar éxito.*
 
 #### Comandos de Mantenimiento en Linux:
 | Acción | Comando |
@@ -272,16 +317,89 @@ sudo bash scripts/install_macos_service.sh
 open http://127.0.0.1:8989/
 ```
 
-*El script instala el binario en `/usr/local/bin/pos-peripherals-agent`, desactiva atributos de cuarentena Gatekeeper (`xattr -cr`), configura `/Library/Application Support/OmniBridgePOS` y carga el demonio `/Library/LaunchDaemons/com.omnibridge.pos.plist`.*
+*El script usa `/usr/local/bin/pos-peripherals-agent`, `/Library/Application Support/OmniBridgePOS` y `/Library/LaunchDaemons/com.omnibridge.pos.plist`. Conserva la cuenta del LaunchDaemon y registra con `launchctl bootstrap`. No elimina la cuarentena de Gatekeeper.*
 
 #### Comandos de Mantenimiento en macOS:
 | Acción | Comando |
 | :--- | :--- |
-| **Reiniciar servicio** | `sudo launchctl unload -w /Library/LaunchDaemons/com.omnibridge.pos.plist && sudo launchctl load -w /Library/LaunchDaemons/com.omnibridge.pos.plist` |
+| **Reiniciar servicio** | `sudo launchctl kickstart -k system/com.omnibridge.pos` |
 | **Ver registros de salida** | `tail -f /Library/Logs/OmniBridgePOS/agent.log` |
 | **Desinstalar servicio** | `sudo bash scripts/uninstall_macos_service.sh` |
 
 ---
+
+### 3.4 Actualización controlada y diagnóstico sin periféricos
+
+Descargar y verificar el paquete completo (checksum y firma cuando exista) en
+una carpeta **separada del destino instalado**. No descomprimir sobre un servicio
+en ejecución: hacerlo reemplaza archivos antes de que el instalador pueda
+detenerlo o respaldarlo. Los scripts toman el paquete junto a su propia carpeta,
+no un directorio de trabajo arbitrario.
+
+Ejecutar el instalador de la plataforma desde ese paquete:
+
+```sh
+# Linux: instalación o actualización; puerto esperado opcional, por defecto 8989
+sudo bash scripts/install_linux_service.sh 8989
+# macOS: instalación o actualización
+sudo bash scripts/install_macos_service.sh 8989
+```
+
+```powershell
+# PowerShell como Administrador, conservando el directorio ya instalado
+.\scripts\install_windows_service.ps1 -InstallDir 'C:\PosAgent' -Port 8989
+```
+
+El puerto debe coincidir con la configuración guardada. El argumento no modifica
+esa configuración; solo selecciona la comprobación HTTP. El asistente Inno Setup
+acepta `/AGENTPORT=8989`, validado como entero de 1 a 65535 antes de detener el
+servicio. Un servicio Windows ya registrado en otro directorio se rechaza:
+esta actualización no migra rutas.
+
+- Los scripts respaldan binario/unidad Unix o binario/herramientas Windows,
+  detienen el servicio antes del reemplazo y conservan configuración y licencia
+  existentes. Nunca copian ni sustituyen la clave maestra local.
+- Los archivos iniciales se crean solo si faltan. Los respaldos se retienen en
+  `install-backup.*` (Unix) o `install-backup-*` (Windows), con permisos privados;
+  no se borran automáticamente.
+- Unix verifica hasta diez veces gestor + `/api/v1/health/live`, con timeout
+  HTTP de dos segundos e intervalos de un segundo. Windows usa hasta diez
+  comprobaciones del mismo endpoint y del servicio.
+- Si falla el reemplazo, los scripts intentan restaurar sus archivos respaldados
+  y reiniciar la instalación anterior. **Siempre devuelven error**, aunque la
+  recuperación funcione. Si no consiguen detener el nuevo servicio, no restauran
+  un binario que podría seguir en ejecución; se requiere intervención técnica.
+- Si falla una primera instalación sin binario anterior, intentan detener el
+  servicio nuevo y retienen archivos para diagnóstico; no inventan un rollback.
+- El asistente gráfico detiene el servicio antes de copiar y conserva una copia
+  `.previous-*` del binario. Su recuperación es limitada a ese binario: ante
+  fallo, revisar herramientas/registro y recuperar manualmente antes de reabrir
+  la caja. No equivale al respaldo de los scripts.
+- Las cuentas y rutas actuales no cambian. Esto no certifica mínimo privilegio
+  ni corrige automáticamente los permisos heredados de datos Windows.
+
+Diagnóstico de **solo lectura**, sin impresión, pesada, pulso de gaveta ni purga:
+
+```sh
+sudo bash scripts/diagnose_service.sh 8989
+```
+
+```powershell
+.\scripts\diagnose_service.ps1 -Port 8989
+```
+
+Salida 0 requiere gestor activo y respuesta HTTP válida; salida distinta de cero
+indica fallo o estado inaccesible. No muestra secretos de configuración. Liveness
+no verifica periféricos, autenticación, configuración cargada ni SHA del proceso;
+otro proceso en el puerto puede responder. Contrastar el PID/ruta del gestor y
+el checksum instalado, revisar logs sin compartir credenciales y repetir las
+pruebas físicas de impresión/pesada/gaveta desde el POS antes de aceptar la caja.
+
+Las pruebas aisladas de instaladores usan gestores y HTTP falsos. La instalación
+nativa Linux/Windows/macOS y ejecución PowerShell siguen requiriendo validación
+en entornos dedicados antes de distribución comercial. El CI incorpora parser
+PowerShell y compilación Inno Setup; esa compilación no se ejecutó en el macOS
+de desarrollo y debe aprobar antes de distribuir el instalador gráfico.
 
 ## 4. Banco de Pruebas de Verificación (Smoke Test)
 
@@ -393,7 +511,7 @@ curl -X POST "http://127.0.0.1:8989/printers/cleanup"
 
 | Síntoma | Causa Frecuente | Solución |
 | :--- | :--- | :--- |
-| `macOS: "Apple could not verify pos-peripherals-agent is free of malware"` | Descarga web con atributo de cuarentena Gatekeeper (`com.apple.quarantine`). | Ejecutar `xattr -cr .` o `xattr -d com.apple.quarantine pos-peripherals-agent` en la carpeta, o autorizar en *Ajustes del Sistema > Privacidad y Seguridad*. |
+| `macOS: "Apple could not verify pos-peripherals-agent is free of malware"` | Descarga web con atributo de cuarentena Gatekeeper (`com.apple.quarantine`). | Verificar procedencia, checksum y firma; detenerse y revisar autorización con el administrador en *Ajustes del Sistema > Privacidad y Seguridad*. No borrar atributos recursivamente. |
 | `macOS/Linux: zsh: permission denied: ./run_macos_linux.sh` | El archivo descargado carece de permisos de ejecución `+x`. | Ejecutar `chmod +x pos-peripherals-agent scripts/run_macos_linux.sh`. |
 | `cp: config.example.toml: No such file or directory` | Se ejecutó un script antiguo desde la subcarpeta `scripts/`. | El script actual detecta la raíz automáticamente. Actualizar o ejecutar desde la raíz del paquete. |
 | `Error de puerto serial: Access is denied` (Windows) | El puerto COM está abierto por otra aplicación (ej. un emulador o terminal serial abierta). | Cerrar cualquier software o terminal que tenga tomado el puerto COM. |
@@ -425,6 +543,45 @@ host = "0.0.0.0"
 api_key = "REEMPLAZAR_POR_UN_SECRETO_ALEATORIO_LARGO"
 ```
 Si el host no es loopback y falta `api_key`, las rutas protegidas responden `401` (falla cerrado) y el log emite una advertencia de seguridad.
+
+**Administración independiente:** panel, configuración, licencias, purga/página
+de prueba y enrolamiento solo funcionan con bind loopback y `server.admin_key`
+aleatoria de 32–256 bytes, distinta de `api_key`. Sin ella quedan bloqueados.
+Configure la clave manualmente en `[server]`, reinicie y acceda a
+`http://127.0.0.1:8989/admin/login`. La cookie HttpOnly/SameSite=Strict dura
+30 minutos; cierre de sesión y reinicio la revocan. Login JSON limitado a 1 KiB;
+5 intentos/minuto y hasta 16 sesiones globales por proceso. Las escrituras con
+cookie exigen Origin local del puerto principal. Los clientes administrativos
+nativos pueden enviar `Authorization: Bearer <admin_key>` sin Origin.
+El POS externo y su clave operativa no obtienen permisos administrativos.
+
+No poner claves en URLs, ejemplos publicados ni bundles JavaScript. Restringir
+permisos del archivo y sus respaldos/temporales al usuario del servicio
+(0600 Unix / ACL Windows). Rotar manualmente y reiniciar. Restringir también
+el directorio en Windows: los reemplazos heredan su ACL.
+El guardado usa temporales privados, sincronización y reemplazo atómico; los
+fallos de respaldo se devuelven como errores, sin sobrescribir la configuración.
+El panel cubre los 35 campos no secretos de servidor, bascula, impresion y
+biometria. El formulario lee la configuracion guardada; las tarjetas conservan
+la activa hasta reiniciar. La API diferencia `config` activa / `saved_config`
+en GET y `config` guardada / `active_config` en POST, con `restart_required`.
+Las escrituras se serializan dentro del proceso y usan el destino elegido al
+iniciar (una plantilla genera config.toml en su mismo directorio). No escribir
+con varios agentes o editores simultaneamente. No existe control de revisiones.
+Un archivo ilegible, invalido o con campos desconocidos bloquea lectura/guardado,
+sin fallback que borre datos; el respaldo anterior debe revisarse para recuperar
+manualmente y reiniciar. Un destino inexistente parte de la configuracion activa.
+Guardar no conserva comentarios TOML ni activa cambios en caliente.
+Cambiar host/puertos puede mover o bloquear la consola; un bind de red requiere
+api_key manual y firewall antes de reiniciar. El panel confirma cambios de red,
+simulacion, biometria y habilitacion de descargas privadas.
+Los overrides DTR/RTS y VID/PID se eliminan con null; la IP del reloj ausente se
+persiste como cadena vacia. `sumatra_args` es legacy persistida, no una plantilla
+ejecutable: el motor mantiene sus argumentos internos seguros. Consultar OpenAPI
+para campos y limites; configuracion no implica homologacion de hardware.
+No publicar loopback mediante túneles o proxies: el control depende del bind, no de identidad del peer.
+Esta consola HTTP local no utiliza cookie Secure ni implementa cuentas por
+persona/RBAC granular. Ver README para límites de confianza frente a procesos locales.
 Los clientes nativos autorizados deberán incluir la cabecera:
 ```http
 Authorization: Bearer <secreto_configurado>
@@ -455,5 +612,3 @@ Si una caja comparte una impresora o báscula con otros terminales de la tienda:
   ```text
   pass in proto tcp from 192.168.1.0/24 to any port 8989
   ```
-
-

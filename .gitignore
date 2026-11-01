@@ -1,0 +1,11 @@
+config.toml
+config.toml.bak
+config.toml.tmp
+.master_key
+*.key
+.env
+.env.*
+licenses/
+release-assets/
+release-dist/
+.DS_Store
