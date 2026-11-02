@@ -252,6 +252,12 @@ Start-Service OmniBridgePos
 | :--- | :--- |
 | **Instalar servicio automáticamente** | `powershell -ExecutionPolicy Bypass -File .\scripts\install_windows_service.ps1` |
 | **Desinstalar servicio automáticamente** | `powershell -ExecutionPolicy Bypass -File .\scripts\uninstall_windows_service.ps1` |
+| **Menú de Salud y Gestión POS-80 (1 clic)** | Doble clic en `.\scripts\printer_health.bat` *(auto-eleva a Administrador)* |
+| **Diagnosticar colas POS-80 (CLI)** | `powershell -ExecutionPolicy Bypass -File .\scripts\printer_health.ps1` |
+| **Consolidar duplicados POS-80 y predeterminada** | `powershell -ExecutionPolicy Bypass -File .\scripts\printer_health.ps1 -Repair` |
+| **Limpieza profunda para reinstalar driver** | `powershell -ExecutionPolicy Bypass -File .\scripts\printer_health.ps1 -CleanInstall` |
+| **Página de prueba en POS-80** | `powershell -ExecutionPolicy Bypass -File .\scripts\printer_health.ps1 -TestPrint` |
+| **Habilitar acceso SSH para soporte remoto** | Ver [§3.5 Habilitación de OpenSSH Server en Windows](#35-habilitación-de-openssh-server-en-windows-para-soporte-y-diagnóstico-remoto) |
 | **Reiniciar servicio** *(tras cambiar config.toml o license.key)* | `Restart-Service OmniBridgePos` |
 | **Detener servicio** | `Stop-Service OmniBridgePos` |
 | **Iniciar servicio** | `Start-Service OmniBridgePos` |
@@ -395,11 +401,145 @@ otro proceso en el puerto puede responder. Contrastar el PID/ruta del gestor y
 el checksum instalado, revisar logs sin compartir credenciales y repetir las
 pruebas físicas de impresión/pesada/gaveta desde el POS antes de aceptar la caja.
 
+Para soporte asistido sin escribir comandos en consola, hacer doble clic en:
+
+```cmd
+.\scripts\printer_health.bat
+```
+
+Este lanzador solicita elevación UAC de Administrador automáticamente y presenta
+un menú interactivo de 5 opciones: diagnosticar colas y puertos USB, reparar y
+unificar colas a una sola POS-80 predeterminada, realizar limpieza profunda
+para reinstalar driver, enviar página de prueba y salir.
+
+Para diagnosticar las colas `POS-80`, sus variantes `Copy`, `Copia` o
+`copy of` vía PowerShell CLI, ejecutar primero sin cambios:
+
+```powershell
+.\scripts\printer_health.ps1
+```
+
+La salida 0 confirma una sola cola utilizable llamada `POS-80`; la salida 2
+indica que requiere corrección. Para reparar, abrir PowerShell como
+Administrador y ejecutar:
+
+```powershell
+.\scripts\printer_health.ps1 -Repair
+```
+
+La reparación solicita confirmación, detiene temporalmente `OmniBridgePos` si
+está activo, cancela únicamente los trabajos de esa familia, reinicia el
+Spooler cuando existe `PendingDeletion`, desactiva el modo de administración
+automática de impresora predeterminada por Windows (`LegacyDefaultPrinterMode`),
+fija `POS-80` como predeterminada, conserva el controlador, elimina las colas
+hermanas y normaliza el nombre a `POS-80`. Para omitir la confirmación en
+soporte desatendido se puede agregar `-Confirm:$false`; para hacerla
+predeterminada explícitamente, `-SetDefault`.
+
+Para casos donde el controlador o la cola quedaron corruptos y se requiere
+dejar el sistema 100% limpio para reinstalar desde `C:\POS Printer Driver V7.17`:
+
+```powershell
+.\scripts\printer_health.ps1 -CleanInstall
+```
+
+Este procedimiento detiene el Spooler, elimina los archivos temporales retenidos
+en `C:\Windows\System32\spool\PRINTERS`, reinicia el Spooler, elimina todas las
+colas `POS-80` / `POS-58` corruptas, localiza el instalador ejecutable en
+`C:\POS Printer Driver V7.17` y ofrece lanzarlo con las instrucciones de selección
+de puerto USB y fijación predeterminada.
+
+Para verificar la comunicación física con la ticketera enviando una página de prueba:
+
+```powershell
+.\scripts\printer_health.ps1 -TestPrint
+```
+
+Si hay varias colas igualmente utilizables, el script se detiene para evitar
+eliminar una impresora física incorrecta. En ese caso se debe identificar la
+que imprime y repetir con su nombre exacto, por ejemplo:
+
+```powershell
+.\scripts\printer_health.ps1 -Repair -KeepPrinterName "POS-80 (Copy 2)"
+```
+
+Si la única cola estaba en `PendingDeletion` y Windows la elimina sin volver a
+crearla, conectar la impresora a su puerto USB definitivo, esperar la
+instalación Plug and Play y repetir. El script no elimina paquetes de drivers,
+no purga trabajos de otras impresoras y no puede certificar salida física en
+papel; al finalizar se debe imprimir una página de prueba.
+
 Las pruebas aisladas de instaladores usan gestores y HTTP falsos. La instalación
 nativa Linux/Windows/macOS y ejecución PowerShell siguen requiriendo validación
 en entornos dedicados antes de distribución comercial. El CI incorpora parser
 PowerShell y compilación Inno Setup; esa compilación no se ejecutó en el macOS
 de desarrollo y debe aprobar antes de distribuir el instalador gráfico.
+
+---
+
+### 3.5 Habilitación de OpenSSH Server en Windows para Soporte y Diagnóstico Remoto
+
+En estaciones de caja de tienda donde los ingenieros de soporte o administradores de sistemas necesitan diagnosticar periféricos, inspeccionar logs (`agent.log`), revisar el Spooler o ejecutar scripts de mantenimiento (`printer_health.ps1`, `diagnose_scale.ps1`, `diagnose_service.ps1`) sin interrumpir la interfaz gráfica del cajero ni depender de herramientas de acceso visual de terceros, Windows 10 y Windows 11 incorporan nativamente la capacidad **OpenSSH Server (`sshd`)**.
+
+#### 1. Activación Automatizada en Windows (PowerShell como Administrador)
+
+Para instalar la capacidad, configurar el servicio en inicio automático, abrir la regla en Windows Defender Firewall y autorizar una llave pública de soporte SSH en una sola instrucción, ejecutar en la máquina Windows:
+
+```powershell
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; Start-Service sshd; Set-Service sshd -StartupType Automatic; New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -DisplayName 'OpenSSH Server' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 -ErrorAction SilentlyContinue
+```
+
+#### 2. Configuración de Autenticación por Llave Pública (Recomendado sin Contraseña)
+
+Para permitir acceso desatendido seguro mediante par de claves criptográficas (`Ed25519` o `RSA 4096`), registrar la clave pública del operador/servidor de soporte en la estación de caja:
+
+```powershell
+# Para usuarios estándar:
+New-Item -ItemType Directory -Force -Path "$HOME\.ssh" | Out-Null
+Set-Content -Path "$HOME\.ssh\authorized_keys" -Value "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... operador@soporte" -Force
+
+# Para usuarios pertenecientes al grupo Administradores (requisito estricto de OpenSSH en Windows):
+New-Item -ItemType Directory -Force -Path "C:\ProgramData\ssh" | Out-Null
+Set-Content -Path "C:\ProgramData\ssh\administrators_authorized_keys" -Value "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... operador@soporte" -Force
+icacls.exe "C:\ProgramData\ssh\administrators_authorized_keys" /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F" | Out-Null
+```
+
+> [!IMPORTANT]
+> En Windows, las cuentas con privilegios de Administrador leen exclusivamente el archivo `C:\ProgramData\ssh\administrators_authorized_keys`. Dicho archivo **debe** tener las listas de control de acceso (ACL) restringidas a `Administrators` y `SYSTEM` mediante `icacls`, o el servidor SSH rechazará la conexión por razones de seguridad.
+
+#### 3. Verificación del Servicio en la Estación
+
+```powershell
+# Comprobar estado del servicio
+Get-Service sshd
+
+# Comprobar puerto de escucha
+netstat -ano | findstr :22
+```
+
+#### 4. Operación Remota desde la Estación de Soporte (Linux / macOS)
+
+Una vez habilitado, el técnico puede interactuar con la caja remota directamente:
+
+```bash
+# Sesión interactiva en PowerShell remoto:
+ssh usuario@192.168.1.XXX
+
+# Diagnóstico de salud de impresora POS-80 remoto:
+ssh usuario@192.168.1.XXX "powershell -ExecutionPolicy Bypass -File C:\PosAgent\scripts\printer_health.ps1"
+
+# Reparación y unificación automática de POS-80 remota:
+ssh usuario@192.168.1.XXX "powershell -ExecutionPolicy Bypass -File C:\PosAgent\scripts\printer_health.ps1 -Repair -Confirm:\$false"
+
+# Comprobación de liveness del servicio OmniBridge:
+ssh usuario@192.168.1.XXX "powershell -ExecutionPolicy Bypass -File C:\PosAgent\scripts\diagnose_service.ps1 -Port 8989"
+```
+
+#### 5. Consideraciones de Seguridad en Redes de Tienda
+- Restringir la regla de firewall `OpenSSH-Server-In-TCP` a la subred de gestión local o interfaz VPN interna, evitando exposición a subredes públicas o de clientes.
+- Desactivar autenticación por contraseña si se utiliza exclusivamente autenticación por llave pública editando `C:\ProgramData\ssh\sshd_config` (`PasswordAuthentication no`).
+
+---
 
 ## 4. Banco de Pruebas de Verificación (Smoke Test)
 
