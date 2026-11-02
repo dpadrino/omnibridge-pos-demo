@@ -752,3 +752,81 @@ Si una caja comparte una impresora o báscula con otros terminales de la tienda:
   ```text
   pass in proto tcp from 192.168.1.0/24 to any port 8989
   ```
+
+---
+
+### 6.4 Generación y Configuración de `admin_key` en los 3 Sistemas Operativos
+
+El acceso administrativo local (`/`, `/admin`, configuración de hardware, purga de colas, licencias y enrolamiento biométrico) requiere que `server.admin_key` en `config.toml` contenga una clave secreta aleatoria de **32 a 256 bytes**, distinta de la `api_key` operativa. Sin esta clave configurada, la interfaz de administración web permanece bloqueada para impedir manipulaciones no autorizadas o accidentales en la estación de caja.
+
+A continuación se detallan las instrucciones y comandos nativos para generar e inyectar esta clave en los tres sistemas operativos soportados:
+
+#### 1. Windows (PowerShell como Administrador)
+
+En la estación de caja Windows, ejecutar en PowerShell:
+
+```powershell
+# 1. Generar clave criptográficamente segura de 32 caracteres
+$adminKey = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | ForEach-Object {[char]$_})
+
+# 2. Inyectar automáticamente en config.toml
+$configPath = "C:\PosAgent\config.toml"
+if (Test-Path $configPath) {
+    (Get-Content $configPath) -replace 'admin_key = ""', "admin_key = `"$adminKey`"" | Set-Content $configPath
+    Restart-Service OmniBridgePos
+    Write-Host ">>> admin_key configurada con éxito: $adminKey" -ForegroundColor Green
+    Write-Host ">>> Inicie sesión en http://127.0.0.1:8989/ con esa clave." -ForegroundColor Cyan
+} else {
+    Write-Warning "No se encontró $configPath. Ajuste la ruta según su instalación."
+}
+```
+
+#### 2. Linux (Ubuntu, Debian, CentOS, RHEL)
+
+En servidores o terminales Linux POS:
+
+```bash
+# 1. Localizar archivo de configuración
+CONFIG_FILE="/etc/omnibridge/config.toml"
+[ ! -f "$CONFIG_FILE" ] && [ -f "./config.toml" ] && CONFIG_FILE="./config.toml"
+
+# 2. Generar clave segura de 32 caracteres con OpenSSL e inyectar
+ADMIN_KEY=$(openssl rand -hex 16)
+sudo sed -i "s/admin_key = \"\"/admin_key = \"$ADMIN_KEY\"/" "$CONFIG_FILE"
+
+# 3. Reiniciar el servicio
+if systemctl is-active --quiet omnibridge 2>/dev/null; then
+    sudo systemctl restart omnibridge
+fi
+
+echo ">>> admin_key configurada con éxito: $ADMIN_KEY"
+echo ">>> Inicie sesión en http://127.0.0.1:8989/ con esa clave."
+```
+
+#### 3. macOS (Apple Silicon y Mac Intel)
+
+En terminales de prueba o puntos de venta en macOS:
+
+```zsh
+# 1. Localizar archivo de configuración según modo de ejecución
+if [ -f "/Library/Application Support/OmniBridgePOS/config.toml" ]; then
+    CONFIG_FILE="/Library/Application Support/OmniBridgePOS/config.toml"
+else
+    CONFIG_FILE="./config.toml"
+fi
+
+# 2. Generar clave de 32 caracteres con OpenSSL e inyectar
+ADMIN_KEY=$(openssl rand -hex 16)
+sed -i '' "s/admin_key = \"\"/admin_key = \"$ADMIN_KEY\"/" "$CONFIG_FILE"
+
+# 3. Reiniciar servicio launchd si está instalado
+if sudo launchctl list 2>/dev/null | grep -q "com.omnibridge.pos"; then
+    sudo launchctl kickstart -k system/com.omnibridge.pos
+fi
+
+echo ">>> admin_key configurada con éxito: $ADMIN_KEY"
+echo ">>> Inicie sesión en http://127.0.0.1:8989/ con esa clave."
+```
+
+> [!TIP]
+> Una vez iniciada sesión en `http://127.0.0.1:8989/`, la cookie de sesión (`HttpOnly`, `SameSite=Strict`) durará **30 minutos**. Al presionar "Cerrar sesión" o reiniciar el agente, la sesión se revoca inmediatamente. Los clientes administrativos nativos pueden enviar alternativamente la cabecera HTTP `Authorization: Bearer <admin_key>`.
